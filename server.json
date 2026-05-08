@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "com.pandadoc.mcp/mcp",
+  "title": "PandaDoc MCP Server",
+  "description": "The PandaDoc MCP server brings PandaDoc document context directly into your AI workflow.",
+  "repository": {
+    "url": "https://github.com/pandadoc/mcp-server-guide",
+    "source": "github"
+  },
+  "version": "1.0.0-dev.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.pandadoc.com/v1/mcp"
+    }
+  ]
+}

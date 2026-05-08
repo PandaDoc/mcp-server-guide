@@ -1,0 +1,17 @@
+{
+  "name": "pandadoc",
+  "description": "Plugin that includes the PandaDoc MCP server and Skills for common workflows.",
+  "version": "1.0.0-dev.0",
+  "author": {
+    "name": "PandaDoc",
+    "url": "https://www.pandadoc.com"
+  },
+  "homepage": "https://github.com/pandadoc/mcp-server-guide",
+  "keywords": [
+    "pandadoc",
+    "documents",
+    "mcp",
+    "ui",
+    "code-connect"
+  ]
+}

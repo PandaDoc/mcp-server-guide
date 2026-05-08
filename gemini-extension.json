@@ -1,0 +1,13 @@
+{
+  "name": "PandaDoc",
+  "version": "1.0.0-dev.0",
+  "description": "Create, send, sign and track documents. Connect your PandaDoc account to manage your entire document workflow without leaving the conversation.",
+  "mcpServers": {
+    "pandadoc": {
+      "httpUrl": "https://mcp.pandadoc.com/v1/mcp",
+      "oauth": {
+        "enabled": true
+      }
+    }
+  }
+}
