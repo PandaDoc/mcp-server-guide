@@ -4,6 +4,12 @@ This repository contains configuration files as well as skills and tools to help
 
 PandaDoc hosts a remote MCP server at [https://mcp.pandadoc.com/v1/mcp](https://mcp.pandadoc.com/v1/mcp). This allows secure MCP client access via OAuth. View the docs [here](https://developers.pandadoc.com/docs/how-to-use-the-pandadoc-mcp-server).
 
+> [!NOTE]
+> PandaDoc document creation, sending, and other operations volume and limits are also applied to the PandaDoc MCP server.
+>
+> Existing rate limits for PandaDoc Public API also apply to PandaDoc MCP server tools.
+> For more information on Public API limts can be found in: https://developers.pandadoc.com/reference/limits
+
 ## Installation & Setup
 
 ### Connect to the PandaDoc MCP server
