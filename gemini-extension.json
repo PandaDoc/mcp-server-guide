@@ -1,5 +1,5 @@
 {
-  "name": "PandaDoc",
+  "name": "pandadoc",
   "version": "1.0.0",
   "description": "Create, send, sign and track documents. Connect your PandaDoc account to manage your entire document workflow without leaving the conversation.",
   "mcpServers": {
