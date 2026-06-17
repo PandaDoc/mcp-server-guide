@@ -1,13 +1,32 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.pandadoc.mcp/mcp",
   "title": "PandaDoc MCP Server",
-  "description": "The PandaDoc MCP server brings PandaDoc document context directly into your AI workflow.",
+  "description": "PandaDoc MCP server for creating, sending, signing, and tracking PandaDoc documents.",
+  "websiteUrl": "https://developers.pandadoc.com/docs/getting-started-with-mcp",
   "repository": {
-    "url": "https://github.com/pandadoc/mcp-server-guide",
+    "url": "https://github.com/PandaDoc/mcp-server-guide",
     "source": "github"
   },
   "version": "1.0.0",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/PandaDoc/mcp-server-guide/main/assets/pd-logo_green.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ],
+      "theme": "dark"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/PandaDoc/mcp-server-guide/main/assets/pd-logo_black.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ],
+      "theme": "light"
+    }
+  ],
   "remotes": [
     {
       "type": "streamable-http",
