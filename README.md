@@ -29,6 +29,7 @@ PandaDoc hosts a remote MCP server at [https://mcp.pandadoc.com/v1/mcp](https://
 - [Installation & Setup](#installation--setup)
   - [Claude Desktop](#claude-desktop)
   - [Claude Code](#claude-code)
+  - [Cline](#cline)
   - [OpenCode](#opencode)
   - [Codex](#codex)
   - [Cursor](#cursor)
@@ -71,6 +72,40 @@ To set up the PandaDoc MCP server in Claude Code:
 6. Click **Authorize** to authenticate and allow Claude Code to access your PandaDoc account.
 7. Once authentication completes, head back to the terminal and run the `/mcp` command again.
 8. The PandaDoc server should now display as connected, and you're ready to start prompting in Claude Code.
+
+### Cline
+
+To set up the PandaDoc MCP server in the Cline IDE extension:
+
+1. Open Cline and click the **MCP Servers** icon in the top toolbar.
+2. Open the **Remote Servers** tab.
+3. Enter the following details:
+
+   - Server Name: `PandaDoc`
+   - Server URL: [https://mcp.pandadoc.com/v1/mcp](https://mcp.pandadoc.com/v1/mcp)
+   - Transport Type: **Streamable HTTP**
+
+4. Click **Add Server**.
+5. When Cline requests authentication, continue in your browser.
+6. Click **Allow access**, then **Authorize**, to allow Cline to access your PandaDoc account.
+7. Return to Cline and verify that the PandaDoc tools are available.
+
+You can also open **Configure MCP Servers** and add the server manually:
+
+```json
+{
+  "mcpServers": {
+    "pandadoc": {
+      "type": "streamableHttp",
+      "url": "https://mcp.pandadoc.com/v1/mcp",
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
+```
+
+No local package, source code, API key, or environment variable is required. Authentication is handled through PandaDoc OAuth.
 
 ### OpenCode
 
