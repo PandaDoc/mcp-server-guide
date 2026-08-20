@@ -8,7 +8,7 @@
 
 # PandaDoc MCP Server Guide
 
-Configuration files, skills, and tools to integrate PandaDoc with LLMs and agent frameworks.
+Configuration files and tools to integrate PandaDoc with LLMs and agent frameworks.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-developers.pandadoc.com-blue.svg)](https://developers.pandadoc.com/docs/how-to-use-the-pandadoc-mcp-server)
@@ -32,9 +32,11 @@ PandaDoc hosts a remote MCP server at [https://mcp.pandadoc.com/v1/mcp](https://
   - [Cline](#cline)
   - [OpenCode](#opencode)
   - [Codex](#codex)
+  - [Kiro](#kiro)
   - [Cursor](#cursor)
   - [VS Code](#vs-code)
   - [Gemini (powered by Gemini CLI)](#gemini-powered-by-gemini-cli)
+- [Support and Privacy](#support-and-privacy)
 - [License](#license)
 
 ## Installation & Setup
@@ -138,6 +140,15 @@ To set up the PandaDoc MCP server in Codex desktop:
 8. Click **Authorize** to authenticate and allow Codex to access your PandaDoc account.
 9. Once authentication completes, head back to the Codex window, and you're ready to start prompting in Codex.
 
+### Kiro
+
+To install the PandaDoc power from its public GitHub repository:
+
+1. Open the **Powers** panel and select **Add Custom Power**.
+2. Select **Import power from GitHub**.
+3. Enter `https://github.com/PandaDoc/mcp-server-guide` and click **Install**.
+4. Ask Kiro to perform a PandaDoc task and complete the PandaDoc OAuth flow when prompted.
+
 ### Cursor
 
 To set up the PandaDoc MCP server in Cursor:
@@ -214,6 +225,11 @@ To set up the PandaDoc MCP server for use with [Gemini](https://geminicli.com/):
 ---
 
 Instructions vary depending on the client. For other clients, ask your client how to add an MCP server or check your client's documentation.
+
+## Support and Privacy
+
+- For help, visit the [PandaDoc Help Center](https://support.pandadoc.com/en/).
+- Review the [PandaDoc Privacy Notice](https://www.pandadoc.com/legal/privacy-notice/).
 
 ## License
 
