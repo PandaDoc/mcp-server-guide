@@ -21,8 +21,8 @@ interchangeable and are not. Getting it wrong produces a list that is confidentl
 ## Prerequisites
 
 The PandaDoc MCP Server must be connected. Required tools: `documents_list`, `documents_search`,
-`documents_details_get`, `documents_metadata_get`. Useful: `documents_metadata_batch_get` to batch
-metadata lookups instead of one call per document, and `documents_content_get` or
+`documents_details_get`, `documents_metadata_batch_get` — it reads one document or many, so pass a
+one-element `document_ids` for a single one. Also useful: `documents_content_get` or
 `documents_summary_get` for reading a term out of the text. If they are missing, say so and point at
 <https://mcp.pandadoc.com>.
 
@@ -34,7 +34,7 @@ metadata lookups instead of one call per document, and `documents_content_get` o
 | --- | --- | --- |
 | `expiration_date` / `date_expiration` / `date_expired` | `documents_list`, `documents_details_get`, `documents_search` | **The signing link's expiry.** Set at send time — observed as `date_sent` + ~60 days. Meaningless once signed. |
 | `effective_date` | `documents_search` filter column only | When the agreement takes effect. Closer to what you want, but it is a start date, not an end date. |
-| `Agreement date` | `documents_metadata_get`, AI-extracted | The date on the face of the contract. Also a start, not an end. |
+| `Agreement date` | `documents_metadata_batch_get`, AI-extracted | The date on the face of the contract. Also a start, not an end. |
 
 **None of them is a renewal date.** PandaDoc does not store a contract end date as a field — the term
 ("two years from the effective date", "renews annually unless cancelled") lives in the contract text.
@@ -66,7 +66,7 @@ If you need to confirm a document was genuinely signed, check `signature_date` p
 
 In order of preference:
 
-1. `documents_metadata_get` → **`Agreement date`**. Only present on completed documents and extracted
+1. `documents_metadata_batch_get` → **`Agreement date`**. Only present on completed documents and extracted
    asynchronously. Handle `{code: "extraction_pending", retry_after: N}` by retrying once, and
    `{code: "not_started"}` or `{code: "failed"}` by falling back.
 2. `documents_search` with `date_filter_column: "effective_date"` if you are narrowing rather than reading
@@ -94,7 +94,7 @@ Renewal date = start date + term. State the arithmetic you used per contract.
 
 ### Step 4: Add counterparty and value
 
-- counterparty → `documents_metadata_get` → `Counterparty name`, with the same `acceptance_status` caveat
+- counterparty → `documents_metadata_batch_get` → `Counterparty name`, with the same `acceptance_status` caveat
 - value → `documents_details_get` → **`pricing.total`**, currency from `pricing.tables[].currency`, or
   `pricing.quotes[].currency` when `tables` is empty — a Quote-block document keeps its pricing there
 - **never `grand_total`** — observed as `0 PLN` on a document worth 200,000 USD

@@ -22,14 +22,14 @@ them**.
 ## Prerequisites
 
 The PandaDoc MCP Server must be connected. Required tools: `documents_list`, `documents_search`,
-`documents_details_get`, `documents_metadata_get`. Strongly recommended:
-`documents_metadata_batch_get`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
+`documents_details_get`, `documents_metadata_batch_get` — it reads one document or many, so pass a
+one-element `document_ids` for a single one. If they are missing, say so and point at <https://mcp.pandadoc.com>.
 
 ---
 
 ## What extraction gives you, and what it costs
 
-`documents_metadata_get` returns AI-extracted fields. Observed on a completed contract:
+`documents_metadata_batch_get` returns AI-extracted fields. Observed on a completed contract:
 
 `Counterparty name`, `Counterparty address`, `Counterparty signer name`, `Internal party legal name`,
 `Internal signer name`, `Agreement date`, plus term checkboxes — `Audit rights`, `Exclusivity`,
@@ -51,8 +51,7 @@ Three constraints that must reach the user:
 
 ## The search limitation — say it out loud
 
-**Metadata is not queryable.** Neither `documents_metadata_get` nor `documents_metadata_batch_get` accepts a
-filter; both read by document. There is no way to ask "which contracts have `Counterparty name = Acme`".
+**Metadata is not queryable.** `documents_metadata_batch_get` accepts no filter; it reads by document. There is no way to ask "which contracts have `Counterparty name = Acme`".
 
 So building a register for one customer means:
 
