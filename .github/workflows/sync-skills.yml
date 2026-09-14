@@ -1,0 +1,87 @@
+name: Sync skills
+
+# Imports skills from pandadoc-studio/agentic-hub-skills into this Claude plugin. When the content
+# hash of any skill changes, it bumps the plugin version, commits, tags v<version>, and cuts a
+# release with the plugin zip. No change → the job is a no-op.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Source ref (tag/branch). Blank = latest release tag, fallback main."
+        required: false
+        default: ""
+      bump:
+        description: "Version bump when changes are found"
+        required: false
+        default: "patch"
+        type: choice
+        options: [patch, minor, major]
+  # Enable the nightly schedule once the SKILLS_REPO_TOKEN secret is set (see PR description):
+  # schedule:
+  #   - cron: "0 6 * * *" # nightly at 06:00 UTC
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-skills
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # persist-credentials: false — otherwise checkout writes the default workflow token as a
+      # git auth header for github.com, which hijacks the clone of the private skills repo.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Read access to the (internal) skills repo, scoped to ONLY that repo so it never
+      # interferes with pushing back to this repo.
+      - name: Configure skills-repo read access
+        env:
+          SKILLS_REPO_TOKEN: ${{ secrets.SKILLS_REPO_TOKEN }}
+        run: |
+          if [ -z "${SKILLS_REPO_TOKEN}" ]; then
+            echo "::error::SKILLS_REPO_TOKEN secret is not set."
+            exit 1
+          fi
+          git config --global "url.https://x-access-token:${SKILLS_REPO_TOKEN}@github.com/pandadoc-studio/agentic-hub-skills.insteadOf" "https://github.com/pandadoc-studio/agentic-hub-skills"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "lts/*" # latest LTS
+
+      - name: Sync skills
+        id: sync
+        env:
+          SKILLS_REF: ${{ github.event.inputs.ref }}
+          BUMP: ${{ github.event.inputs.bump }}
+          SYNC_NOTES_FILE: ${{ runner.temp }}/notes.md
+        run: node scripts/sync-skills.mjs
+
+      - name: Validate plugin
+        if: steps.sync.outputs.changed == 'true'
+        run: npx --yes @anthropic-ai/claude-code@latest plugin validate . --strict
+
+      - name: Commit, tag, and release
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.sync.outputs.version }}
+          SUMMARY: ${{ steps.sync.outputs.summary }}
+          NOTES_FILE: ${{ runner.temp }}/notes.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add -A
+          git commit -m "chore(skills): sync agentic-hub-skills → v${VERSION} (${SUMMARY})"
+          git tag -a "v${VERSION}" -m "v${VERSION}"
+          git push origin HEAD:main
+          git push origin "v${VERSION}"
+          node scripts/package-plugin.mjs "v${VERSION}"
+          gh release create "v${VERSION}" --title "v${VERSION}" --notes-file "${NOTES_FILE}" "dist/pandadoc-plugin-v${VERSION}.zip"
