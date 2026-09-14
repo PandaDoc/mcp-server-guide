@@ -17,9 +17,9 @@ on:
         default: "patch"
         type: choice
         options: [patch, minor, major]
-  # Enable the nightly schedule once the SKILLS_REPO_TOKEN secret is set (see PR description):
-  # schedule:
-  #   - cron: "0 6 * * *" # nightly at 06:00 UTC
+  # Nightly sync (requires the SKILLS_REPO_TOKEN secret — see PR description).
+  schedule:
+    - cron: "0 6 * * *" # nightly at 06:00 UTC
 
 permissions:
   contents: write
