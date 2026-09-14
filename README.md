@@ -36,6 +36,7 @@ PandaDoc hosts a remote MCP server at [https://mcp.pandadoc.com/v1/mcp](https://
   - [Cursor](#cursor)
   - [VS Code](#vs-code)
   - [Gemini (powered by Gemini CLI)](#gemini-powered-by-gemini-cli)
+- [PandaDoc Claude Plugin](#pandadoc-claude-plugin)
 - [Support and Privacy](#support-and-privacy)
 - [License](#license)
 
@@ -225,6 +226,32 @@ To set up the PandaDoc MCP server for use with [Gemini](https://geminicli.com/):
 ---
 
 Instructions vary depending on the client. For other clients, ask your client how to add an MCP server or check your client's documentation.
+
+## PandaDoc Claude Plugin
+
+Beyond the raw connector, this repo also publishes a **Claude plugin** that bundles everything a Claude user needs in a single install:
+
+- **Document-automation skills** — guided workflows for quotes, NDAs, approvals, invoices, renewals, contract insights, and more.
+- **The PandaDoc connector, pre-wired** — connect to the MCP server in one click, no manual setup.
+- **A quick-start hook** that lists the available skills at the start of a session.
+
+The plugin works in **Claude Code** — the terminal CLI, the **Code** tab in the Claude desktop app, the IDE extensions, and [claude.ai/code](https://claude.ai/code). In any of them:
+
+1. Add this repo as a plugin marketplace:
+
+   ```
+   /plugin marketplace add PandaDoc/mcp-server-guide
+   ```
+
+2. Install the plugin:
+
+   ```
+   /plugin install pandadoc@pandadoc
+   ```
+
+3. Connect the bundled **PandaDoc** connector and authorize access to your account — in the terminal, run `/mcp`, select the PandaDoc connector, and complete the OAuth flow; in the desktop app or IDE, click **Connect** on PandaDoc in the plugin's connectors.
+
+The skills are now available — type `/` to browse them, or just describe your task (e.g. _"send this NDA for signature"_). To pull newer skill versions later, run `/plugin marketplace update`.
 
 ## Support and Privacy
 
