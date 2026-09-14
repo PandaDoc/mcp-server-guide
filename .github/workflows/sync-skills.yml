@@ -1,8 +1,8 @@
 name: Sync skills
 
 # Imports skills from pandadoc-studio/agentic-hub-skills into this Claude plugin. When the content
-# hash of any skill changes, it bumps the plugin version, commits, tags v<version>, and cuts a
-# release with the plugin zip. No change → the job is a no-op.
+# hash of any skill changes, it bumps the plugin version and commits the updated files to main.
+# It does NOT create tags or GitHub Releases (this repo has its own release system). No change → no-op.
 
 on:
   workflow_dispatch:
@@ -60,28 +60,22 @@ jobs:
         env:
           SKILLS_REF: ${{ github.event.inputs.ref }}
           BUMP: ${{ github.event.inputs.bump }}
-          SYNC_NOTES_FILE: ${{ runner.temp }}/notes.md
         run: node scripts/sync-skills.mjs
 
       - name: Validate plugin
         if: steps.sync.outputs.changed == 'true'
         run: npx --yes @anthropic-ai/claude-code@latest plugin validate . --strict
 
-      - name: Commit, tag, and release
+      - name: Commit skill updates
         if: steps.sync.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.sync.outputs.version }}
           SUMMARY: ${{ steps.sync.outputs.summary }}
-          NOTES_FILE: ${{ runner.temp }}/notes.md
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add -A
           git commit -m "chore(skills): sync agentic-hub-skills → v${VERSION} (${SUMMARY})"
-          git tag -a "v${VERSION}" -m "v${VERSION}"
           git push origin HEAD:main
-          git push origin "v${VERSION}"
-          node scripts/package-plugin.mjs "v${VERSION}"
-          gh release create "v${VERSION}" --title "v${VERSION}" --notes-file "${NOTES_FILE}" "dist/pandadoc-plugin-v${VERSION}.zip"
