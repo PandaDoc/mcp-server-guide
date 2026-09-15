@@ -1,0 +1,16 @@
+{
+  "name": "pandadoc",
+  "description": "PandaDoc plugins for Claude — document-automation skills plus the PandaDoc MCP connector.",
+  "owner": {
+    "name": "PandaDoc"
+  },
+  "plugins": [
+    {
+      "name": "pandadoc",
+      "source": ".",
+      "description": "PandaDoc document-automation skills + the PandaDoc MCP connector — quotes, NDAs, approvals, invoices and contract insights, with one-click connect.",
+      "category": "productivity",
+      "keywords": ["pandadoc", "documents", "e-signature", "sales", "legal", "contracts"]
+    }
+  ]
+}
