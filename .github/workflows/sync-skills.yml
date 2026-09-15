@@ -1,8 +1,8 @@
 name: Sync skills
 
 # Imports skills from pandadoc-studio/agentic-hub-skills into this Claude plugin. When the content
-# hash of any skill changes, it bumps the plugin version and commits the updated files to main.
-# It does NOT create tags or GitHub Releases (this repo has its own release system). No change → no-op.
+# hash of any skill changes, it bumps the plugin version and opens a PR to main with the updated files
+# for review. It does NOT push to main directly or create tags/GitHub Releases. No change → no-op.
 
 on:
   workflow_dispatch:
@@ -23,6 +23,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: sync-skills
@@ -60,22 +61,57 @@ jobs:
         env:
           SKILLS_REF: ${{ github.event.inputs.ref }}
           BUMP: ${{ github.event.inputs.bump }}
+          SYNC_NOTES_FILE: ${{ runner.temp }}/notes.md
         run: node scripts/sync-skills.mjs
 
       - name: Validate plugin
         if: steps.sync.outputs.changed == 'true'
         run: npx --yes @anthropic-ai/claude-code@latest plugin validate . --strict
 
-      - name: Commit skill updates
+      - name: Open skills sync PR
         if: steps.sync.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.sync.outputs.version }}
           SUMMARY: ${{ steps.sync.outputs.summary }}
+          NOTES_FILE: ${{ runner.temp }}/notes.md
         run: |
+          BRANCH="automated/skills-sync"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          # Stage the sync onto a dedicated branch (current main + the synced files).
+          git checkout -B "${BRANCH}"
           git add -A
           git commit -m "chore(skills): sync agentic-hub-skills → v${VERSION} (${SUMMARY})"
-          git push origin HEAD:main
+
+          # If an open PR already proposes this exact content, don't re-push (avoids nightly churn).
+          git fetch origin "${BRANCH}:refs/remotes/origin/${BRANCH}" 2>/dev/null || true
+          if git rev-parse --verify --quiet "refs/remotes/origin/${BRANCH}" >/dev/null && git diff --quiet "origin/${BRANCH}" HEAD; then
+            echo "Sync branch already up to date; nothing to push."
+            exit 0
+          fi
+
+          # The ruleset protects main/master only, so force-pushing this automation branch is allowed.
+          git push --force origin "${BRANCH}"
+
+          {
+            echo "Automated skills sync from \`pandadoc-studio/agentic-hub-skills\` (\`${SUMMARY}\`), bumping the plugin to **v${VERSION}**."
+            echo
+            echo "Skills are vendored verbatim — do not hand-edit \`skills/\`. Review and merge to publish."
+            echo
+            cat "${NOTES_FILE}" 2>/dev/null || true
+          } > "${RUNNER_TEMP}/pr-body.md"
+
+          PR_NUM="$(gh pr list --head "${BRANCH}" --base main --state open --json number --jq '.[0].number')"
+          if [ -z "${PR_NUM}" ]; then
+            gh pr create --base main --head "${BRANCH}" \
+              --title "chore(skills): sync agentic-hub-skills → v${VERSION}" \
+              --body-file "${RUNNER_TEMP}/pr-body.md"
+          else
+            gh pr edit "${PR_NUM}" \
+              --title "chore(skills): sync agentic-hub-skills → v${VERSION}" \
+              --body-file "${RUNNER_TEMP}/pr-body.md"
+            echo "Updated existing PR #${PR_NUM}."
+          fi
