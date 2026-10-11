@@ -1,21 +1,21 @@
 {
   "source": {
     "repo": "pandadoc-studio/agentic-hub-skills",
-    "ref": "main",
-    "commit": "bf5b3e7c2ad3884067c966890a6357f3e21b4401"
+    "ref": "dev-0.2.1",
+    "commit": "1b20bb98a1fa84ed8792d84e3b151039ad467a6e"
   },
-  "pluginVersion": "1.0.0",
-  "syncedAt": "2026-09-14T12:47:23.848Z",
+  "pluginVersion": "1.0.1",
+  "syncedAt": "2026-10-11T12:01:07.797Z",
   "skills": {
-    "pandadoc-approval-send": "sha256:9bffc4f61e9abeec47162901a5778c2a242bfe59dad69bc077e0ba106a72cc86",
-    "pandadoc-contract-register": "sha256:a2dae2a924ca5bc25c38e24d397a5958b07530a47a000831b3bfbf32df36908c",
-    "pandadoc-engagement-tracker": "sha256:d34fc70b9980831f9c88cd3a89139f6c1c1509df72e10fe2b6215bd60b04f5df",
-    "pandadoc-followup-list": "sha256:087b9a65bcdef442c06eebde8faf9b965d24d6d03c40f149220e899ccce69557",
-    "pandadoc-invoice-handoff": "sha256:26184fdc1f138ec8fd04e3338ea8c5a863b46c8564a4b6e16432999cb46328de",
-    "pandadoc-nda-fast-send": "sha256:026bdca31c5366dc2fc04d1d8efe3b428d369ce14fa3fd8fb228875513d5eb12",
-    "pandadoc-onboarding-agreement": "sha256:883323d920dae01ba3bb1653bf8d568b7469f7105a44b680bd021c06dcaa8708",
-    "pandadoc-quote-builder": "sha256:87aeeac17909a30755ac47e5ae18abc852b8c953651b9dfa1fc3baf4541113a9",
-    "pandadoc-renewal-radar": "sha256:c9e151522cba2cbe70d6974b7cea21bbe60347606819304222fa4fb4563fc605",
-    "pandadoc-signing-velocity": "sha256:e72601133b5c636276926f16a677087c45090b53f0ae8b8d317edc6363528803"
+    "pandadoc-approval-send": "sha256:834c15d77fcac5b8ccd52b09c7813e6e267c2fe04472e8e3603e84f12609e0ed",
+    "pandadoc-contract-register": "sha256:6cee63a050f3b9b369d8e63815d7851f4c42c8c5e79ad06ffd433acd5fd01b6c",
+    "pandadoc-engagement-tracker": "sha256:fda961135e799c8685f4990e0ed8e5d2ba446b7fd4c35efde6b704f452bf4e28",
+    "pandadoc-followup-list": "sha256:941d5f4d4ed15ca5e9e0590efed36efec0ab081831c2939be1001102067d4f08",
+    "pandadoc-invoice-handoff": "sha256:0928eab2b703a14da14d5f6baf27c3567889435d51988e2178ecf97960b57fa4",
+    "pandadoc-nda-fast-send": "sha256:9d42b8f9d6e56c8bc41470cd84cef0f69507e05cf425af0fa19ec1f2e5a6bf0d",
+    "pandadoc-onboarding-agreement": "sha256:327bc328ceda914e1e7325e0e20454855368e31d74b490bf467eb9676681da93",
+    "pandadoc-quote-builder": "sha256:b58d7d75dbe4599cc1a2dccc4cf445967041bd453dc045cae10d4637521c78cd",
+    "pandadoc-renewal-radar": "sha256:1e35d9b84f78b3e0e89efe771bcc523c19228a1cc2e0f4360b38906161dd4c5b",
+    "pandadoc-signing-velocity": "sha256:37391838202a0f3fd16582d4c6e0450f2b7b2ae739f74fb69ef2e1143f52905e"
   }
 }

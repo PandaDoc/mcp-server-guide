@@ -7,6 +7,8 @@ prerequisites: [PandaDoc]
 description: Build a priced PandaDoc quote or proposal from a template — fill the pricing table and variables, verify the totals and discount actually landed as asked, confirm, then send for signature. Use when someone wants a quote, proposal or priced offer created for a client.
 tags: [pandadoc, quotes, proposals, pricing, e-signature, sales]
 version: "0.1.1"
+metadata:
+  visibility: public
 ---
 
 # PandaDoc Quote & Proposal Builder

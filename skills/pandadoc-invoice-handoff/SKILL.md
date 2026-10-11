@@ -7,6 +7,8 @@ prerequisites: [PandaDoc]
 description: Turn a signed quote or proposal into an invoice — find quotes that completed and have not been invoiced yet, reuse their pricing, create the invoice from a template, and send it on confirmation. Use when someone asks to invoice a closed deal or wants signed quotes swept for invoicing.
 tags: [pandadoc, invoicing, finance, quotes, e-signature]
 version: "0.1.0"
+metadata:
+  visibility: public
 ---
 
 # PandaDoc Quote → Invoice Handoff
@@ -24,8 +26,11 @@ The PandaDoc MCP Server must be connected. Required tools: `documents_list`, `do
 `templates_list`, `templates_details_get`, `documents_create`, `documents_status_get`, `documents_update`,
 `documents_send`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
 
-**An invoice template must exist in the workspace.** The reference account has none, so this skill is
-untested end to end.
+**An invoice template must exist in the workspace, with a pricing table (not a Quote block) in the
+quote's currency.** The reference account has two "invoice"-named templates and neither qualifies:
+one's pricing block is a Quote, not a table (the exact trap Step 4 describes), and the other returns
+an API error on every read. So the create-and-verify path (Steps 5–6) remains untested end to end
+against a real template; the sweep, exclusion, and refusal steps are not affected.
 
 ---
 

@@ -7,6 +7,8 @@ prerequisites: [PandaDoc]
 description: Send a standard NDA to a counterparty in one motion — find the right NDA template, prefill the counterparty, make sure every signature is assigned, confirm, then send. Use when someone wants an NDA, mutual NDA or confidentiality agreement issued.
 tags: [pandadoc, nda, confidentiality, e-signature, legal]
 version: "0.1.0"
+metadata:
+  visibility: public
 ---
 
 # PandaDoc NDA Fast-Send
