@@ -1,5 +1,0 @@
-{
-  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
-  "name": "pandadoc",
-  "description": "Create, send and track PandaDoc documents from your agent. Connects the PandaDoc MCP server and adds guided workflows for quotes, NDAs, approvals, onboarding paperwork, invoices, renewals and signing reports."
-}

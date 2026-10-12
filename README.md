@@ -256,15 +256,12 @@ The skills are now available — type `/` to browse them, or just describe your 
 
 ## PandaDoc Antigravity Plugin
 
-The same skills and connector are packaged as a [Google Antigravity plugin](https://antigravity.google/docs/plugins). Antigravity's manifest schema differs from the one at the repo root, so its manifest and MCP config live in [`antigravity/`](antigravity/) and the plugin is assembled from them and the shared `skills/`.
+The same skills and connector install as a [Google Antigravity plugin](https://antigravity.google/docs/plugins) straight from this repo:
 
-To install it with the Antigravity CLI:
+1. Run `agy plugin install https://github.com/PandaDoc/mcp-server-guide`.
+2. Open Antigravity's **Customizations** panel, click **Authenticate** next to the PandaDoc MCP server, and authorize access to your account. Paste the authorization code back into the panel when prompted.
 
-1. Clone this repo and run `node scripts/build-antigravity-plugin.mjs`.
-2. Run `agy plugin install ./dist/antigravity/pandadoc`.
-3. Open Antigravity's **Customizations** panel, click **Authenticate** next to the PandaDoc MCP server, and authorize access to your account. Paste the authorization code back into the panel when prompted.
-
-The skills then appear as slash commands such as `/pandadoc-nda-fast-send`, or Antigravity picks them up when you describe a task. Add `--zip` to the build command to get a distributable archive in `dist/`.
+The skills then appear as slash commands such as `/pandadoc-nda-fast-send`, or Antigravity picks them up when you describe a task. Antigravity reads the MCP server from `mcp_config.json`.
 
 ## Support and Privacy
 
