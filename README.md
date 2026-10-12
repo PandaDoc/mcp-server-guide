@@ -37,6 +37,7 @@ PandaDoc hosts a remote MCP server at [https://mcp.pandadoc.com/v1/mcp](https://
   - [VS Code](#vs-code)
   - [Gemini (powered by Gemini CLI)](#gemini-powered-by-gemini-cli)
 - [PandaDoc Claude Plugin](#pandadoc-claude-plugin)
+- [PandaDoc Antigravity Plugin](#pandadoc-antigravity-plugin)
 - [Support and Privacy](#support-and-privacy)
 - [License](#license)
 
@@ -252,6 +253,15 @@ The plugin works in **Claude Code** — the terminal CLI, the **Code** tab in th
 3. Connect the bundled **PandaDoc** connector and authorize access to your account — in the terminal, run `/mcp`, select the PandaDoc connector, and complete the OAuth flow; in the desktop app or IDE, click **Connect** on PandaDoc in the plugin's connectors.
 
 The skills are now available — type `/` to browse them, or just describe your task (e.g. _"send this NDA for signature"_). To pull newer skill versions later, run `/plugin marketplace update`.
+
+## PandaDoc Antigravity Plugin
+
+The same skills and connector install as a [Google Antigravity plugin](https://antigravity.google/docs/plugins) straight from this repo:
+
+1. Run `agy plugin install https://github.com/PandaDoc/mcp-server-guide`.
+2. Open Antigravity's **Customizations** panel, click **Authenticate** next to the PandaDoc MCP server, and authorize access to your account. Paste the authorization code back into the panel when prompted.
+
+The skills then appear as slash commands such as `/pandadoc-nda-fast-send`, or Antigravity picks them up when you describe a task. Antigravity reads the MCP server from `mcp_config.json`.
 
 ## Support and Privacy
 
