@@ -1,83 +1,76 @@
 #!/usr/bin/env node
 /**
- * build-antigravity-plugin.mjs — mirror ./skills into the Antigravity plugin at ./antigravity.
+ * build-antigravity-plugin.mjs — assemble the Google Antigravity plugin in dist/.
  *
- * The repo root is the Claude / Agent Plugins plugin; Antigravity's plugin.json schema allows only
- * `$schema`, `name` and `description` (additionalProperties: false), so it cannot share the root
- * manifest and lives in its own directory. Skills are copied, not symlinked, so the directory stays
- * self-contained when Antigravity stages or packages it on its own.
+ * Antigravity's plugin.json schema allows only `$schema`, `name` and `description`
+ * (additionalProperties: false), so it cannot share the root manifest. antigravity/ holds the
+ * Antigravity-only files; this script combines them with the shared ./skills.
  *
  * Usage:
- *   node scripts/build-antigravity-plugin.mjs           # rewrite antigravity/skills from ./skills
- *   node scripts/build-antigravity-plugin.mjs --check   # exit 1 if antigravity/ is out of date
+ *   node scripts/build-antigravity-plugin.mjs          # → dist/antigravity/pandadoc/
+ *   node scripts/build-antigravity-plugin.mjs --zip    # also → dist/pandadoc-antigravity-plugin-v<version>.zip
+ *
+ * The Antigravity manifest carries no version, so the zip takes it from .claude-plugin/plugin.json.
  */
+import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { hashDirectory } from "./lib/hash.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const SOURCE_DIR = join(REPO_ROOT, "antigravity");
 const SKILLS_SRC = join(REPO_ROOT, "skills");
-const PLUGIN_DIR = join(REPO_ROOT, "antigravity");
-const SKILLS_DEST = join(PLUGIN_DIR, "skills");
+const DIST_DIR = join(REPO_ROOT, "dist");
 const MANIFEST_KEYS = new Set(["$schema", "name", "description"]);
 const NAME_PATTERN = /^[a-zA-Z0-9-_]+$/;
-
-const check = process.argv.includes("--check");
 
 main();
 
 function main() {
-  const errors = validateManifests();
-  const srcSlugs = listSkills(SKILLS_SRC);
-  if (srcSlugs.length === 0) errors.push(`No skills found under ${SKILLS_SRC}`);
-
-  if (check) {
-    const destSlugs = existsSync(SKILLS_DEST) ? listSkills(SKILLS_DEST) : [];
-    const missing = srcSlugs.filter((s) => !destSlugs.includes(s));
-    const extra = destSlugs.filter((s) => !srcSlugs.includes(s));
-    const stale = srcSlugs.filter(
-      (s) => destSlugs.includes(s) && hashDirectory(join(SKILLS_SRC, s)) !== hashDirectory(join(SKILLS_DEST, s)),
-    );
-    if (missing.length) errors.push(`Missing from antigravity/skills: ${missing.join(", ")}`);
-    if (extra.length) errors.push(`Not in ./skills: ${extra.join(", ")}`);
-    if (stale.length) errors.push(`Out of date in antigravity/skills: ${stale.join(", ")}`);
-    if (missing.length + extra.length + stale.length) {
-      errors.push("Run `node scripts/build-antigravity-plugin.mjs` and commit the result.");
-    }
-    finish(errors, `antigravity/ is in sync (${srcSlugs.length} skills).`);
-    return;
+  const errors = [];
+  const manifest = readJson(join(SOURCE_DIR, "plugin.json"), errors);
+  const mcp = readJson(join(SOURCE_DIR, "mcp_config.json"), errors);
+  if (manifest) validateManifest(manifest, errors);
+  if (mcp) validateMcpConfig(mcp, errors);
+  const skills = listSkills(SKILLS_SRC);
+  if (skills.length === 0) errors.push(`No skills found under ${SKILLS_SRC}`);
+  if (errors.length) {
+    for (const e of errors) console.error(`ERROR: ${e}`);
+    process.exit(1);
   }
 
-  if (errors.length) finish(errors);
-  rmSync(SKILLS_DEST, { recursive: true, force: true });
-  mkdirSync(SKILLS_DEST, { recursive: true });
-  for (const slug of srcSlugs) {
-    cpSync(join(SKILLS_SRC, slug), join(SKILLS_DEST, slug), { recursive: true });
+  const outDir = join(DIST_DIR, "antigravity", manifest.name);
+  rmSync(outDir, { recursive: true, force: true });
+  mkdirSync(join(outDir, "skills"), { recursive: true });
+  cpSync(join(SOURCE_DIR, "plugin.json"), join(outDir, "plugin.json"));
+  cpSync(join(SOURCE_DIR, "mcp_config.json"), join(outDir, "mcp_config.json"));
+  for (const slug of skills) cpSync(join(SKILLS_SRC, slug), join(outDir, "skills", slug), { recursive: true });
+  console.log(`Built: ${outDir} (${skills.length} skills)`);
+
+  if (process.argv.includes("--zip")) {
+    const { version } = JSON.parse(readFileSync(join(REPO_ROOT, ".claude-plugin", "plugin.json"), "utf8"));
+    const zipFile = join(DIST_DIR, `pandadoc-antigravity-plugin-v${version}.zip`);
+    rmSync(zipFile, { force: true });
+    execFileSync("zip", ["-qr", zipFile, "."], { cwd: outDir, stdio: "inherit" });
+    console.log(`Zipped: ${zipFile}`);
   }
-  finish([], `Mirrored ${srcSlugs.length} skills into antigravity/skills.`);
 }
 
-function validateManifests() {
-  const errors = [];
-  const manifest = readJson(join(PLUGIN_DIR, "plugin.json"), errors);
-  if (manifest) {
-    const unknown = Object.keys(manifest).filter((k) => !MANIFEST_KEYS.has(k));
-    if (unknown.length) errors.push(`antigravity/plugin.json: keys not allowed by the schema: ${unknown.join(", ")}`);
-    if (typeof manifest.name !== "string" || !NAME_PATTERN.test(manifest.name)) {
-      errors.push("antigravity/plugin.json: `name` is required and must match ^[a-zA-Z0-9-_]+$");
+function validateManifest(manifest, errors) {
+  const unknown = Object.keys(manifest).filter((k) => !MANIFEST_KEYS.has(k));
+  if (unknown.length) errors.push(`antigravity/plugin.json: keys not allowed by the schema: ${unknown.join(", ")}`);
+  if (typeof manifest.name !== "string" || !NAME_PATTERN.test(manifest.name)) {
+    errors.push("antigravity/plugin.json: `name` is required and must match ^[a-zA-Z0-9-_]+$");
+  }
+}
+
+function validateMcpConfig(mcp, errors) {
+  for (const [id, server] of Object.entries(mcp.mcpServers || {})) {
+    if (!server.serverUrl) errors.push(`antigravity/mcp_config.json: server "${id}" needs \`serverUrl\``);
+    for (const legacy of ["url", "httpUrl", "type"]) {
+      if (legacy in server) errors.push(`antigravity/mcp_config.json: server "${id}" uses unsupported key \`${legacy}\``);
     }
   }
-  const mcp = readJson(join(PLUGIN_DIR, "mcp_config.json"), errors);
-  if (mcp) {
-    for (const [id, server] of Object.entries(mcp.mcpServers || {})) {
-      if (!server.serverUrl) errors.push(`antigravity/mcp_config.json: server "${id}" needs \`serverUrl\``);
-      for (const legacy of ["url", "httpUrl", "type"]) {
-        if (legacy in server) errors.push(`antigravity/mcp_config.json: server "${id}" uses unsupported key \`${legacy}\``);
-      }
-    }
-  }
-  return errors;
 }
 
 function listSkills(dir) {
@@ -94,12 +87,4 @@ function readJson(path, errors) {
     errors.push(`${path}: ${e.message}`);
     return null;
   }
-}
-
-function finish(errors, okMessage) {
-  if (errors.length) {
-    for (const e of errors) console.error(`ERROR: ${e}`);
-    process.exit(1);
-  }
-  console.log(okMessage);
 }
