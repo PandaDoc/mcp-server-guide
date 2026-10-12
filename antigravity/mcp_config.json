@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "pandadoc": {
+      "serverUrl": "https://mcp.pandadoc.com/v1/mcp"
+    }
+  }
+}

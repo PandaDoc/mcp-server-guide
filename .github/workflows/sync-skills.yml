@@ -64,6 +64,10 @@ jobs:
           SYNC_NOTES_FILE: ${{ runner.temp }}/notes.md
         run: node scripts/sync-skills.mjs
 
+      - name: Mirror skills into the Antigravity plugin
+        if: steps.sync.outputs.changed == 'true'
+        run: node scripts/build-antigravity-plugin.mjs
+
       - name: Validate plugin
         if: steps.sync.outputs.changed == 'true'
         run: npx --yes @anthropic-ai/claude-code@latest plugin validate . --strict
@@ -99,7 +103,7 @@ jobs:
           {
             echo "Automated skills sync from \`pandadoc-studio/agentic-hub-skills\` (\`${SUMMARY}\`), bumping the plugin to **v${VERSION}**."
             echo
-            echo "Skills are vendored verbatim — do not hand-edit \`skills/\`. Review and merge to publish."
+            echo "Skills are vendored verbatim — do not hand-edit \`skills/\` or \`antigravity/skills/\`. Review and merge to publish."
             echo
             cat "${NOTES_FILE}" 2>/dev/null || true
           } > "${RUNNER_TEMP}/pr-body.md"
