@@ -7,6 +7,8 @@ prerequisites: [PandaDoc]
 description: Track per-recipient signing progress across documents that are out — who has signed, who has not, in what order, and which documents have stalled. Use when someone asks who is holding up a deal or what the state of play is across sent documents.
 tags: [pandadoc, engagement, tracking, e-signature, sales]
 version: "0.1.0"
+metadata:
+  visibility: public
 ---
 
 # PandaDoc Deal-Room Engagement Tracker

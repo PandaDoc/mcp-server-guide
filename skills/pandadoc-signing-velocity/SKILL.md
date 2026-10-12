@@ -7,6 +7,8 @@ prerequisites: [PandaDoc]
 description: Build a signing pipeline report — status counts, average time to sign, value in flight, and documents that are stuck. Computed client-side with the sample size and method stated. Use when someone wants a weekly signing report or pipeline overview.
 tags: [pandadoc, reporting, metrics, pipeline, e-signature]
 version: "0.1.0"
+metadata:
+  visibility: public
 ---
 
 # PandaDoc Signing Velocity & Pipeline Report
@@ -52,20 +54,30 @@ say the count is a floor rather than a total.
 Only `Completed` and `Paid` documents have a duration. For each, you need:
 
 - `date_sent` — **only in `documents_details_get`**, one call per document
-- `date_completed` — in both `documents_list` and details
+- `recipients[].signature_date` — also only in details, one entry per recipient
 
-So the interval is `date_sent → date_completed`. Cap the number of detail calls (30 is reasonable) and say
-if you capped.
+The interval is `date_sent → the latest non-null recipients[].signature_date`. Not `date_completed`:
+that is when the document closed, which is not when it was signed. Cap the number of detail calls
+(30 is reasonable) and say if you capped.
+
+**A document with no non-null `signature_date` has no interval at all.** That single rule is also what
+keeps force-completed documents out: a document flipped via `documents_status_change` has
+`date_completed` set but every `recipients[].signature_date` as `null` and signature fields
+`is_filled: false`, so it contributes nothing to the average and must not be counted as signed.
+
+Do the arithmetic in the open: list each document's interval, then state the sum and the count, then
+divide. Report all three, not just the quotient. A mean that does not match the intervals listed beside
+it is the most common failure here, and it is invisible unless the sum is on the page. Check the
+quotient against the sum and the count before reporting it — this arithmetic has been observed wrong
+in output that had every input right.
 
 Three things to disclose, not bury:
 
 1. **The sample size.** "3.2 days over 7 documents", never just "3.2 days".
-2. **In-flight documents are excluded**, because they have no completion date. That biases the average
+2. **In-flight documents are excluded**, because they have not been signed. That biases the average
    **downward** — fast signers are over-represented and anything still dragging is invisible. Say so.
-3. **Force-completed documents have no real signature.** A document flipped via `documents_status_change`
-   has `date_completed` set but every `recipients[].signature_date` as `null` and signature fields
-   `is_filled: false`. Its "time to sign" is meaningless. Check `signature_date` and exclude those, or
-   report them separately.
+3. **Which signature the interval ends at.** On a multi-signer document it is the last one, so the figure
+   is time to *fully* execute, not time to first signature. State that in the output.
 
 If nothing qualifies, say the sample is empty. Do not produce a number.
 
@@ -115,8 +127,9 @@ measured from, and what was excluded and why.
 ### The average time to sign looks implausibly fast
 
 Check for force-completed documents. `documents_status_change` sets `date_completed` immediately, so a
-document created and flipped in the same minute reports a near-zero duration. Exclude anything whose
-`recipients[].signature_date` is `null`.
+document created and flipped in the same minute reports a near-zero duration if you measure to
+`date_completed`. Measure to the latest `recipients[].signature_date` instead, and exclude anything where
+every one of them is `null`.
 
 ### Value in flight looks far too low
 
@@ -135,5 +148,5 @@ say so.
 
 ### I cannot get `date_sent` without a call per document
 
-Correct — it exists only in `documents_details_get`. Cap the number of documents you expand and disclose the
+Correct — it and `recipients[].signature_date` exist only in `documents_details_get`. Cap the number of documents you expand and disclose the
 cap rather than silently truncating the sample.

@@ -7,6 +7,8 @@ prerequisites: [PandaDoc]
 description: Build a register of signed contracts with their key terms — counterparty, dates, value and negotiated provisions — from PandaDoc's extracted metadata, labelled with how confident each value is. Use when someone wants a contract register, key terms pulled out, or all agreements for a customer.
 tags: [pandadoc, contracts, metadata, legal, register]
 version: "0.1.0"
+metadata:
+  visibility: public
 ---
 
 # PandaDoc Signed-Contract Register & Key-Terms Extractor
@@ -22,14 +24,18 @@ them**.
 ## Prerequisites
 
 The PandaDoc MCP Server must be connected. Required tools: `documents_list`, `documents_search`,
-`documents_details_get`, `documents_metadata_get`. Strongly recommended:
-`documents_metadata_batch_get`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
+`documents_details_get`, `documents_metadata_batch_get`. If they are missing, say so and point at
+<https://mcp.pandadoc.com>.
+
+There is no `documents_metadata_get`. Every metadata read goes through `documents_metadata_batch_get`,
+which takes 1-40 IDs, so one document is a one-element `document_ids`. It also takes `field_keys` when
+you want only some of the fields back.
 
 ---
 
 ## What extraction gives you, and what it costs
 
-`documents_metadata_get` returns AI-extracted fields. Observed on a completed contract:
+`documents_metadata_batch_get` returns AI-extracted fields. Observed on a completed contract:
 
 `Counterparty name`, `Counterparty address`, `Counterparty signer name`, `Internal party legal name`,
 `Internal signer name`, `Agreement date`, plus term checkboxes — `Audit rights`, `Exclusivity`,
@@ -41,9 +47,11 @@ Three constraints that must reach the user:
 1. **Every value carries `acceptance_status`, and it was `pending` on every field of every sample.** That
    means AI-extracted and not human-confirmed. A register presented as fact when nothing in it has been
    reviewed is a liability in a legal context. Label it.
-2. **Extraction runs only on completed documents, asynchronously.** A draft returns
-   `{code: "not_started", description: "Likely, your document is not yet completed."}`. In-progress
-   extraction returns `{code: "extraction_pending", retry_after: N}`. Failure returns `{code: "failed"}`.
+2. **Extraction runs only on completed documents, asynchronously.** Every entry in the batch response
+   carries its own `status`: `ok`, `extraction_pending` (retry after `retry_after`),
+   `internal_error` (also retryable, for that document alone), `extraction_not_started` (the document
+   is not completed yet), `extraction_failed` (terminal — contact support), `not_found` and
+   `access_denied`. One unusable ID does not fail the whole call, so read the status per document.
 3. **There is no monetary field.** Contract value is not in metadata — it comes from
    `documents_details_get` → `pricing.total`.
 
@@ -51,8 +59,9 @@ Three constraints that must reach the user:
 
 ## The search limitation — say it out loud
 
-**Metadata is not queryable.** Neither `documents_metadata_get` nor `documents_metadata_batch_get` accepts a
-filter; both read by document. There is no way to ask "which contracts have `Counterparty name = Acme`".
+**Metadata is not queryable.** `documents_metadata_batch_get` takes document IDs, not a filter — it reads
+by document, and `field_keys` narrows which fields come back, not which documents. There is no way to ask
+"which contracts have `Counterparty name = Acme`".
 
 So building a register for one customer means:
 
@@ -94,10 +103,14 @@ exclude it or list it separately as manually completed.
 
 ### Step 3: Pull metadata
 
-Use `documents_metadata_batch_get` for 1–40 documents at a time rather than a call each.
+Use `documents_metadata_batch_get` for 1–40 documents at a time rather than a call each. Pass
+`field_keys` when you only need some of the fields.
 
-Handle the envelopes: retry once on `extraction_pending` after `retry_after`; on `not_started` or `failed`,
-record the contract with its terms marked unavailable rather than dropping it silently.
+Handle the per-document `status`. Two of them are retryable: `extraction_pending`, once after
+`retry_after`, and `internal_error`, once for that document on its own. The rest are terminal —
+`extraction_not_started`, `extraction_failed`, `not_found`, `access_denied` — and so is a retry that
+comes back the same way. Record those contracts with their terms marked unavailable rather than
+dropping them silently.
 
 ### Step 4: Add value
 
@@ -142,9 +155,14 @@ terms
 The search term did not appear in those documents. Metadata cannot be filtered, so the only entry point is
 full text. Try the legal name, the trading name and the email domain, and say what you tried.
 
-### Metadata comes back `not_started`
+### Metadata comes back `extraction_not_started`
 
 The document is not completed. Extraction only runs on completed documents. Nothing to do but wait.
+
+### `documents_metadata_get` is not a tool
+
+It does not exist on the MCP server. Use `documents_metadata_batch_get` with a one-element
+`document_ids`.
 
 ### Every field says `pending`
 

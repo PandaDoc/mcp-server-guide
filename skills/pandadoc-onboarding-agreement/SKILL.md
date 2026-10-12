@@ -7,6 +7,8 @@ prerequisites: [PandaDoc]
 description: Generate an onboarding or employment document from a template with the new joiner's details prefilled, make sure every field is assigned to them, then send for signature. Use when someone is onboarding a hire and needs paperwork issued.
 tags: [pandadoc, hr, onboarding, employment, e-signature]
 version: "0.1.0"
+metadata:
+  visibility: public
 ---
 
 # PandaDoc Onboarding Agreement Generator

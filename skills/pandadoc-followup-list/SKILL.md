@@ -7,6 +7,8 @@ prerequisites: [PandaDoc]
 description: Sweep documents that are still out for signature, rank them by how long they have been waiting and what they are worth, and draft a follow-up message for each. Use when someone asks what needs chasing, which documents are stuck, or wants nudges drafted.
 tags: [pandadoc, follow-up, pipeline, e-signature, sales]
 version: "0.1.0"
+metadata:
+  visibility: public
 ---
 
 # PandaDoc Unsigned-Document Follow-up List
