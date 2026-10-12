@@ -1,26 +1,30 @@
 {
-  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "pandadoc",
   "version": "1.0.0",
-  "description": "Create, send, sign, and track documents with PandaDoc",
+  "description": "Create and send proposals, quotes, and contracts for e-signature. Track signing progress and identify documents that need follow-up.",
   "author": {
     "name": "PandaDoc",
     "url": "https://www.pandadoc.com"
   },
   "keywords": [
     "pandadoc",
-    "document",
     "documents",
-    "proposal",
     "proposals",
-    "contract",
+    "quotes",
     "contracts",
-    "signature",
-    "signatures",
     "e-signature",
-    "esignature"
+    "sales",
+    "legal",
+    "workflow"
   ],
   "license": "MIT",
   "homepage": "https://developers.pandadoc.com/docs/how-to-use-the-pandadoc-mcp-server",
-  "repository": "https://github.com/PandaDoc/mcp-server-guide"
+  "repository": "https://github.com/PandaDoc/mcp-server-guide",
+  "displayName": "PandaDoc",
+  "logo": "./assets/pd-logo_400x400.png",
+  "suggestedPrompts": [
+    "List my 5 most recently modified PandaDoc documents with their status.",
+    "Show my signing pipeline and identify documents that are stuck.",
+    "Find unsigned documents and draft follow-up messages without sending them."
+  ]
 }
