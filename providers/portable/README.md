@@ -28,18 +28,18 @@ The skill supplies instructions; connect your PandaDoc account separately.
 
 ## Publish to ClawHub locally
 
-Replace `OWNER` with the ClawHub account or organization you can publish for.
+Publishing requires access to the PandaDoc organization in ClawHub.
 Run from the repository root:
 
 ```sh
 npx --yes clawhub@0.23.3 login
-npx --yes clawhub@0.23.3 skill publish providers/portable/skills/pandadoc --owner OWNER --slug pandadoc --name PandaDoc --version 1.0.0 --categories integrations
-npx --yes clawhub@0.23.3 inspect @OWNER/pandadoc
+npx --yes clawhub@0.23.3 skill publish providers/portable/skills/pandadoc --owner pandadoc --slug pandadoc --name PandaDoc --version 1.0.0 --categories integrations
+npx --yes clawhub@0.23.3 inspect @pandadoc/pandadoc
 ```
 
 Add `--dry-run` to the publish command to preview without uploading. ClawHub reviews
 new uploads before making them available. After publication, install with
-`openclaw skills install @OWNER/pandadoc`.
+`openclaw skills install @pandadoc/pandadoc`.
 
 ## Data and permissions
 
