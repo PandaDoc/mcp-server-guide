@@ -253,39 +253,34 @@ GitHub is the source of truth. The package is built from the selected commit's
 from that manifest; skills are copied verbatim. OpenClaw metadata and the catalog
 icon are generated from the same commit. Local uncommitted files are excluded.
 
-Merging a new plugin version in `.claude-plugin/plugin.json` to `main`
-automatically publishes it to ClawHub. The existing skills sync already bumps
-that version. Pull requests check the version and preview the package without
-publishing or receiving the publishing token.
-
-An already published version is skipped when its installed plugin files match.
-Changes to skills, hooks, the MCP configuration, the icon, or the plugin manifest
-require a new version. README-only changes do not trigger a release. Publication
-waits up to 30 minutes for ClawHub security checks; a failed check fails the run.
-Retry a failed release from the **Publish ClawHub** workflow on `main`.
-
-Repository administrators configure the `CLAWHUB_TOKEN` Actions secret once,
-using a ClawHub token with publish access to the `pandadoc` organization. The
-workflow stores it in a temporary CLI config and removes that file after the
-publish command. No PandaDoc account credentials are needed for publication.
-
-For a local preview or manual release, push the commit to GitHub and run:
+Publishing to ClawHub is a local, explicit action. A GitHub push or merge does
+not publish a ClawHub release. Push the selected commit to GitHub before
+publishing it.
 
 ```sh
-# Preview the package, using the commit or release tag you intend to publish.
+# Sign in once, or again if the publishing token expires or is revoked.
+npx --yes clawhub@0.23.3 login
+# Preview the package from the exact GitHub commit or release tag.
 node scripts/package-plugin.mjs --clawhub <commit-or-tag>
-# Publish that exact version under the PandaDoc organization.
+# Publish that same version under the PandaDoc organization.
 node scripts/package-plugin.mjs --clawhub --publish <commit-or-tag>
 ```
 
-Sign in with `npx --yes clawhub@0.23.3 login` first if needed. Publishing requires
-access to the `pandadoc` organization in ClawHub. Each release records its GitHub
-commit SHA and uses the plugin's version for the entire bundle. Bump that version
-before publishing changed content: patch for fixes, minor for added workflows,
-major for breaking changes. The existing skills import also bumps the plugin
-version. GitHub remains the source of plugin files and versions; no separate
-skills source is maintained for ClawHub. Client manifests, installation paths,
-skills, and hooks keep their existing formats.
+Publishing requires access to the `pandadoc` organization in ClawHub. The CLI
+keeps its publishing token in your operating system's user configuration,
+outside this repository. On macOS, the default is
+`~/Library/Application Support/clawhub/config.json`, with owner-only read/write
+permissions (`0600`). This is a local JSON file, not the system Keychain.
+`CLAWHUB_CONFIG_PATH` can override the location. GitHub Actions secrets and
+PandaDoc account credentials are not needed for this publishing process.
+
+Each release records its GitHub commit SHA and uses the plugin's version for
+the entire bundle. Bump `.claude-plugin/plugin.json` before publishing changed
+content: patch for fixes, minor for added workflows, major for breaking changes.
+The existing skills import also bumps that version. Publication waits up to
+30 minutes for ClawHub security checks. GitHub remains the source of plugin
+files; client manifests, installation paths, skills, and hooks keep their
+existing formats.
 
 ## PandaDoc Claude Plugin
 
