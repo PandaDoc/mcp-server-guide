@@ -58,6 +58,14 @@ if (clawhub) {
     ], { maxBuffer: 128 * 1024 * 1024 });
     execFileSync("tar", ["-xf", "-", "-C", stage], { input: archive });
     renameSync(join(stage, "assets/pd-logo_green.png"), join(stage, "assets/icon.png"));
+    const source = "PandaDoc/mcp-server-guide";
+    writeFileSync(join(stage, "package.json"), `${JSON.stringify({
+      name: `@pandadoc/${plugin.name}`,
+      version,
+      description: plugin.description,
+      author: plugin.author,
+      repository: `https://github.com/${source}`,
+    }, null, 2)}\n`);
     writeFileSync(join(stage, "openclaw.plugin.json"), `${JSON.stringify({
       id: plugin.name,
       name: "PandaDoc",
@@ -69,7 +77,6 @@ if (clawhub) {
     mkdirSync(dirname(outDir), { recursive: true });
     rmSync(outDir, { recursive: true, force: true });
     renameSync(stage, outDir);
-    const source = "PandaDoc/mcp-server-guide";
     const command = ["--yes", "clawhub@0.23.3", "package", "publish", outDir,
       "--family", "bundle-plugin", "--bundle-format", "claude", "--host-targets", "openclaw",
       "--name", `@pandadoc/${plugin.name}`, "--owner", "pandadoc", "--display-name", "PandaDoc",
