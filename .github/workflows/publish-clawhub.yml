@@ -1,0 +1,112 @@
+name: Publish ClawHub
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .claude-plugin/plugin.json
+      - .mcp.json
+      - skills/**
+      - hooks/**
+      - assets/pd-logo_green.png
+      - scripts/package-plugin.mjs
+      - .github/workflows/publish-clawhub.yml
+  pull_request:
+    paths:
+      - .claude-plugin/plugin.json
+      - .mcp.json
+      - skills/**
+      - hooks/**
+      - assets/pd-logo_green.png
+      - scripts/package-plugin.mjs
+      - .github/workflows/publish-clawhub.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clawhub-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+
+      - name: Check the published version and plugin contents
+        id: release
+        run: |
+          node --input-type=module <<'JS'
+          import { execFileSync } from 'node:child_process';
+          import { createHash } from 'node:crypto';
+          import { appendFileSync } from 'node:fs';
+          const commit = process.env.GITHUB_SHA;
+          const read = (path) => execFileSync('git', ['show', commit + ':' + path]);
+          const { version } = JSON.parse(read('.claude-plugin/plugin.json'));
+          if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid plugin release version.');
+          const response = await fetch(
+            'https://clawhub.ai/api/v1/packages/%40pandadoc%2Fpandadoc/versions/' + encodeURIComponent(version),
+            { signal: AbortSignal.timeout(15000) },
+          );
+          if (response.status !== 200 && response.status !== 404) {
+            throw new Error('ClawHub version lookup failed: HTTP ' + response.status);
+          }
+          const publish = response.status === 404;
+          if (!publish) {
+            const data = await response.json();
+            if (data.package?.name !== '@pandadoc/pandadoc' || data.version?.version !== version ||
+                !Array.isArray(data.version.files)) throw new Error('Invalid ClawHub version response.');
+            const paths = ['.claude-plugin/plugin.json', '.mcp.json', 'skills', 'hooks', 'assets/pd-logo_green.png'];
+            const files = execFileSync('git', ['ls-tree', '-rz', '--name-only', commit, '--', ...paths],
+              { encoding: 'utf8' }).split('\0').filter(Boolean);
+            const expected = new Map(files.map((path) => [
+              path === 'assets/pd-logo_green.png' ? 'assets/icon.png' : path,
+              createHash('sha256').update(read(path)).digest('hex'),
+            ]));
+            // README changes do not require a plugin release. Check the installed payload.
+            const installed = (path) => path === '.claude-plugin/plugin.json' || path === '.mcp.json' ||
+              path === 'assets/icon.png' || path.startsWith('skills/') || path.startsWith('hooks/');
+            const published = new Map(data.version.files.filter((file) => installed(file.path))
+              .map((file) => [file.path, file.sha256]));
+            const changed = [...new Set([...expected.keys(), ...published.keys()])]
+              .filter((path) => expected.get(path) !== published.get(path));
+            if (changed.length) {
+              throw new Error(version + ' is already published with different plugin contents. ' +
+                'Bump .claude-plugin/plugin.json before releasing: ' + changed.join(', '));
+            }
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, 'publish=' + publish + '\n');
+          console.log(publish ? version + ' is ready to publish.' : version + ' is already published; skipping.');
+          JS
+
+      - name: Preview the committed package
+        if: github.event_name == 'pull_request' || steps.release.outputs.publish == 'true'
+        run: node scripts/package-plugin.mjs --clawhub "$GITHUB_SHA"
+
+      - name: Publish the committed GitHub plugin
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.release.outputs.publish == 'true'
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+          CLAWHUB_CONFIG_PATH: ${{ runner.temp }}/clawhub-publish.json
+        run: |
+          trap 'rm -f "$CLAWHUB_CONFIG_PATH"' EXIT
+          node --input-type=module <<'JS'
+          import { writeFileSync } from 'node:fs';
+          const token = process.env.CLAWHUB_TOKEN;
+          if (!token) throw new Error('Set the CLAWHUB_TOKEN repository secret before publishing.');
+          writeFileSync(process.env.CLAWHUB_CONFIG_PATH, JSON.stringify({
+            registry: 'https://clawhub.ai', token,
+          }), { mode: 0o600, flag: 'wx' });
+          JS
+          unset CLAWHUB_TOKEN
+          node scripts/package-plugin.mjs --clawhub --publish "$GITHUB_SHA"

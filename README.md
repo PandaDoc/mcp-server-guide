@@ -253,7 +253,23 @@ GitHub is the source of truth. The package is built from the selected commit's
 from that manifest; skills are copied verbatim. OpenClaw metadata and the catalog
 icon are generated from the same commit. Local uncommitted files are excluded.
 
-After pushing the commit to GitHub, run from this repository:
+Merging a new plugin version in `.claude-plugin/plugin.json` to `main`
+automatically publishes it to ClawHub. The existing skills sync already bumps
+that version. Pull requests check the version and preview the package without
+publishing or receiving the publishing token.
+
+An already published version is skipped when its installed plugin files match.
+Changes to skills, hooks, the MCP configuration, the icon, or the plugin manifest
+require a new version. README-only changes do not trigger a release. Publication
+waits up to 30 minutes for ClawHub security checks; a failed check fails the run.
+Retry a failed release from the **Publish ClawHub** workflow on `main`.
+
+Repository administrators configure the `CLAWHUB_TOKEN` Actions secret once,
+using a ClawHub token with publish access to the `pandadoc` organization. The
+workflow stores it in a temporary CLI config and removes that file after the
+publish command. No PandaDoc account credentials are needed for publication.
+
+For a local preview or manual release, push the commit to GitHub and run:
 
 ```sh
 # Preview the package, using the commit or release tag you intend to publish.
@@ -267,8 +283,9 @@ access to the `pandadoc` organization in ClawHub. Each release records its GitHu
 commit SHA and uses the plugin's version for the entire bundle. Bump that version
 before publishing changed content: patch for fixes, minor for added workflows,
 major for breaking changes. The existing skills import also bumps the plugin
-version. A GitHub push alone does not publish to ClawHub; run the command again
-for each release. No publishing workflow or separate skills source is required.
+version. GitHub remains the source of plugin files and versions; no separate
+skills source is maintained for ClawHub. Client manifests, installation paths,
+skills, and hooks keep their existing formats.
 
 ## PandaDoc Claude Plugin
 
