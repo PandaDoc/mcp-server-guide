@@ -36,6 +36,8 @@ PandaDoc hosts a remote MCP server at [https://mcp.pandadoc.com/v1/mcp](https://
   - [Cursor](#cursor)
   - [VS Code](#vs-code)
   - [Gemini (powered by Gemini CLI)](#gemini-powered-by-gemini-cli)
+  - [Hermes Agent](#hermes-agent)
+  - [OpenClaw](#openclaw)
 - [PandaDoc Claude Plugin](#pandadoc-claude-plugin)
 - [PandaDoc Antigravity Plugin](#pandadoc-antigravity-plugin)
 - [Support and Privacy](#support-and-privacy)
@@ -228,6 +230,72 @@ To set up the PandaDoc MCP server for use with [Gemini](https://geminicli.com/):
 
 Instructions vary depending on the client. For other clients, ask your client how to add an MCP server or check your client's documentation.
 
+### Hermes Agent
+
+The [portable PandaDoc package](providers/portable) contains the hosted MCP
+configuration and one skill for finding, creating, sending, and tracking
+documents. Install it directly from GitHub:
+
+```sh
+hermes plugins install https://github.com/PandaDoc/mcp-server-guide/tree/main/providers/portable
+hermes plugins enable pandadoc
+```
+
+For a reviewed, reproducible installation, append `--ref` followed by the full
+40-character commit SHA to the install command. A Hermes catalog listing is a
+separate submission; the direct GitHub command does not depend on that listing.
+
+Installing the plugin does not sign you in. Enable OAuth separately:
+
+```sh
+hermes mcp add pandadoc --url https://mcp.pandadoc.com/v1/mcp --auth oauth --connect-timeout 300
+```
+
+Open the PandaDoc sign-in page when prompted, select your workspace and the access
+you want to grant, and finish the connection. No API key is required. Choose read
+access for browsing documents; creating or sending documents requires the
+corresponding access in PandaDoc.
+
+Start a new Hermes session or run `/reload-mcp`, then check the connection:
+
+```sh
+hermes mcp test pandadoc
+```
+
+Try: "List my five most recently modified PandaDoc documents and their status."
+If sign-in expires, run `hermes mcp login pandadoc` and reconnect. The OAuth-enabled
+`mcp_servers.pandadoc` configuration takes precedence over the plugin's `mcp.json`
+entry. The portable manifest alone does not configure OAuth.
+Hermes stores OAuth credentials in its local profile and handles token refresh;
+this repository contains no account credentials.
+
+**Data and sending:** tool requests go to PandaDoc's hosted service. Document
+details returned by the tools enter your Hermes conversation and are handled by
+your configured model provider. Creating a document stores it in PandaDoc;
+sending can notify recipients and start the signature or approval workflow.
+Review the document, recipients, and message before sending. Workflow skills are
+instructions for the assistant, not an enforced permission boundary.
+
+### OpenClaw
+
+The standalone skill is in
+[`providers/portable/skills/pandadoc`](providers/portable/skills/pandadoc).
+Installing a skill supplies workflow instructions; connect the hosted MCP and
+sign in separately:
+
+```sh
+openclaw mcp set pandadoc '{"url":"https://mcp.pandadoc.com/v1/mcp","transport":"streamable-http","auth":"oauth"}'
+openclaw mcp login pandadoc
+openclaw mcp doctor pandadoc --probe
+```
+
+Complete sign-in in PandaDoc and choose the workspace and access you want to
+grant. These commands require an OpenClaw version with the built-in MCP registry.
+See [OpenClaw's MCP documentation](https://docs.openclaw.ai/tools/mcp).
+
+ClawHub publication is a separate step and is not triggered by merging this
+repository. See the [ClawHub release instructions](providers/portable/README.md#clawhub-release).
+
 ## PandaDoc Claude Plugin
 
 Beyond the raw connector, this repo also publishes a **Claude plugin** that bundles everything a Claude user needs in a single install:
@@ -270,4 +338,5 @@ The skills then appear as slash commands such as `/pandadoc-nda-fast-send`, or A
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE), except the standalone ClawHub skill, which is licensed under
+[MIT-0](providers/portable/skills/pandadoc/LICENSE) to match ClawHub's publication terms.
