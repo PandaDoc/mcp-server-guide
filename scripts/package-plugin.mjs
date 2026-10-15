@@ -73,7 +73,8 @@ if (clawhub) {
     const command = ["--yes", "clawhub@0.23.3", "package", "publish", outDir,
       "--family", "bundle-plugin", "--bundle-format", "claude", "--host-targets", "openclaw",
       "--name", `@pandadoc/${plugin.name}`, "--owner", "pandadoc", "--display-name", "PandaDoc",
-      "--version", version, "--source-repo", source, "--source-commit", commit, "--source-ref", ref,
+      "--version", version, "--source-repo", source, "--source-commit", commit,
+      "--source-ref", commit, "--source-path", ".",
       ...(publish ? ["--wait", "--wait-timeout", "600"] : ["--dry-run"]), "--json"];
     console.log(`GitHub source: https://github.com/${source}/tree/${commit}`);
     console.log(`Plugin version: ${version}`);
