@@ -36,7 +36,6 @@ PandaDoc hosts a remote MCP server at [https://mcp.pandadoc.com/v1/mcp](https://
   - [Cursor](#cursor)
   - [VS Code](#vs-code)
   - [Gemini (powered by Gemini CLI)](#gemini-powered-by-gemini-cli)
-  - [Hermes Agent](#hermes-agent)
   - [OpenClaw](#openclaw)
 - [PandaDoc Claude Plugin](#pandadoc-claude-plugin)
 - [PandaDoc Antigravity Plugin](#pandadoc-antigravity-plugin)
@@ -230,16 +229,46 @@ To set up the PandaDoc MCP server for use with [Gemini](https://geminicli.com/):
 
 Instructions vary depending on the client. For other clients, ask your client how to add an MCP server or check your client's documentation.
 
-### Hermes Agent
-
-Install the [portable PandaDoc plugin](providers/portable#hermes) and connect your
-PandaDoc account through OAuth. The package includes the hosted MCP configuration
-and one document workflow skill.
-
 ### OpenClaw
 
-Use the [PandaDoc skill](providers/portable/skills/pandadoc). See the
-[connection and manual ClawHub publishing instructions](providers/portable).
+The PandaDoc plugin includes the same document workflows in [`skills/`](skills)
+and hosted MCP connector as the Claude plugin.
+
+```sh
+openclaw plugins install clawhub:@pandadoc/pandadoc
+openclaw mcp set pandadoc '{"url":"https://mcp.pandadoc.com/v1/mcp","transport":"streamable-http","auth":"oauth"}'
+openclaw mcp login pandadoc
+openclaw mcp doctor pandadoc --probe
+```
+
+Complete PandaDoc sign-in and choose the workspace and access you want to grant.
+OAuth is a separate step after installation. Start a new agent session to use the
+skills. Tool requests go to PandaDoc; returned content enters your agent conversation
+and its configured model provider. Sending a document can notify its recipients.
+
+#### Publish a GitHub plugin version to ClawHub
+
+GitHub is the source of truth. The package is built from the selected commit's
+`.claude-plugin/plugin.json`, `skills/`, `hooks/`, and `.mcp.json`. The version comes
+from that manifest; skills are copied verbatim. OpenClaw metadata and the catalog
+icon are generated from the same commit. Local uncommitted files are excluded.
+
+After pushing the commit to GitHub, run from this repository:
+
+```sh
+# Preview the package, using the commit or release tag you intend to publish.
+node scripts/package-plugin.mjs --clawhub <commit-or-tag>
+# Publish that exact version under the PandaDoc organization.
+node scripts/package-plugin.mjs --clawhub --publish <commit-or-tag>
+```
+
+Sign in with `npx --yes clawhub@0.23.3 login` first if needed. Publishing requires
+access to the `pandadoc` organization in ClawHub. Each release records its GitHub
+commit SHA and uses the plugin's version for the entire bundle. Bump that version
+before publishing changed content: patch for fixes, minor for added workflows,
+major for breaking changes. The existing skills import also bumps the plugin
+version. A GitHub push alone does not publish to ClawHub; run the command again
+for each release. No publishing workflow or separate skills source is required.
 
 ## PandaDoc Claude Plugin
 
@@ -283,5 +312,4 @@ The skills then appear as slash commands such as `/pandadoc-nda-fast-send`, or A
 
 ## License
 
-[MIT](LICENSE), except the standalone skill, which uses
-[MIT-0](providers/portable/skills/pandadoc/LICENSE) as required by ClawHub.
+[MIT](LICENSE)
