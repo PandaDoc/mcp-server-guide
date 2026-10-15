@@ -90,7 +90,7 @@ if (clawhub) {
       "--name", `@pandadoc/${plugin.name}`, "--owner", "pandadoc", "--display-name", "PandaDoc",
       "--version", version, "--source-repo", source, "--source-commit", commit,
       "--source-ref", commit, "--source-path", ".",
-      ...(publish ? ["--wait", "--wait-timeout", "600"] : ["--dry-run"]), "--json"];
+      ...(publish ? ["--wait", "--wait-timeout", "1800"] : ["--dry-run"]), "--json"];
     console.log(`GitHub source: https://github.com/${source}/tree/${commit}`);
     console.log(`Plugin version: ${version}`);
     console.log(`Packaged: ${outDir}`);
