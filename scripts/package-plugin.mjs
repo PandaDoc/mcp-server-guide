@@ -59,6 +59,14 @@ if (clawhub) {
     execFileSync("tar", ["-xf", "-", "-C", stage], { input: archive });
     renameSync(join(stage, "assets/pd-logo_green.png"), join(stage, "assets/icon.png"));
     const source = "PandaDoc/mcp-server-guide";
+    if (publish) {
+      const remote = await fetch(`https://raw.githubusercontent.com/${source}/${commit}/.claude-plugin/plugin.json`, {
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!remote.ok || await remote.text() !== manifest) {
+        throw new Error("Push this plugin commit to GitHub before publishing it to ClawHub.");
+      }
+    }
     writeFileSync(join(stage, "package.json"), `${JSON.stringify({
       name: `@pandadoc/${plugin.name}`,
       version,
