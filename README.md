@@ -246,41 +246,19 @@ OAuth is a separate step after installation. Start a new agent session to use th
 skills. Tool requests go to PandaDoc; returned content enters your agent conversation
 and its configured model provider. Sending a document can notify its recipients.
 
-#### Publish a GitHub plugin version to ClawHub
+#### Publish to ClawHub
 
-GitHub is the source of truth. The package is built from the selected commit's
-`.claude-plugin/plugin.json`, `skills/`, `hooks/`, and `.mcp.json`. The version comes
-from that manifest; skills are copied verbatim. OpenClaw metadata and the catalog
-icon are generated from the same commit. Local uncommitted files are excluded.
-
-Publishing to ClawHub is a local, explicit action. A GitHub push or merge does
-not publish a ClawHub release. Push the selected commit to GitHub before
-publishing it.
+Publish releases manually from a commit or tag already pushed to GitHub.
 
 ```sh
-# Sign in once, or again if the publishing token expires or is revoked.
 npx --yes clawhub@0.23.3 login
-# Preview the package from the exact GitHub commit or release tag.
+# Preview the package.
 node scripts/package-plugin.mjs --clawhub <commit-or-tag>
-# Publish that same version under the PandaDoc organization.
+# Publish the selected version.
 node scripts/package-plugin.mjs --clawhub --publish <commit-or-tag>
 ```
 
-Publishing requires access to the `pandadoc` organization in ClawHub. The CLI
-keeps its publishing token in your operating system's user configuration,
-outside this repository. On macOS, the default is
-`~/Library/Application Support/clawhub/config.json`, with owner-only read/write
-permissions (`0600`). This is a local JSON file, not the system Keychain.
-`CLAWHUB_CONFIG_PATH` can override the location. GitHub Actions secrets and
-PandaDoc account credentials are not needed for this publishing process.
-
-Each release records its GitHub commit SHA and uses the plugin's version for
-the entire bundle. Bump `.claude-plugin/plugin.json` before publishing changed
-content: patch for fixes, minor for added workflows, major for breaking changes.
-The existing skills import also bumps that version. Publication waits up to
-30 minutes for ClawHub security checks. GitHub remains the source of plugin
-files; client manifests, installation paths, skills, and hooks keep their
-existing formats.
+Update the plugin version before publishing changed content.
 
 ## PandaDoc Claude Plugin
 
