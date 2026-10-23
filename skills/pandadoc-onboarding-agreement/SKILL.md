@@ -6,7 +6,7 @@ complexity: intermediate
 prerequisites: [PandaDoc]
 description: Generate an onboarding or employment document from a template with the new joiner's details prefilled, make sure every field is assigned to them, then send for signature. Use when someone is onboarding a hire and needs paperwork issued.
 tags: [pandadoc, hr, onboarding, employment, e-signature]
-version: "0.1.0"
+version: "0.1.1"
 metadata:
   visibility: public
 ---
@@ -22,9 +22,9 @@ half of them blank puts the work back on the new hire.
 
 ## Prerequisites
 
-The PandaDoc MCP Server must be connected. Required tools: `templates_list`, `templates_details_get`,
-`documents_create`, `documents_status_get`, `documents_details_get`, `documents_fields_assign`,
-`documents_update`, `documents_send`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
+The PandaDoc MCP Server must be connected. Required tools: `PandaDoc:templates_list`, `PandaDoc:templates_details_get`,
+`PandaDoc:documents_create`, `PandaDoc:documents_status_get`, `PandaDoc:documents_details_get`, `PandaDoc:documents_fields_assign`,
+`PandaDoc:documents_update`, `PandaDoc:documents_send`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
 
 ---
 
@@ -56,7 +56,7 @@ compensation. Two habits:
 
 ### Step 1: Find the template
 
-`templates_list` with `q` set to the document type — "onboarding", "employment", "offer", or whatever the
+`PandaDoc:templates_list` with `q` set to the document type — "onboarding", "employment", "offer", or whatever the
 user said. `q` is **not** a name substring match, so a single hit is not proof of a correct match. HR
 libraries in particular tend to hold near-duplicates: per contract type, per signer, per country.
 
@@ -68,7 +68,7 @@ libraries in particular tend to hold near-duplicates: per contract type, per sig
 
 ### Step 2: Read the template's fields and roles
 
-`templates_details_get`. You need:
+`PandaDoc:templates_details_get`. You need:
 
 - **`roles[]`** — usually one signing role for HR paperwork (`Employee` is common), but check. Note any
   `preassigned_person`.
@@ -78,9 +78,9 @@ libraries in particular tend to hold near-duplicates: per contract type, per sig
 
 **Only a field with a non-null `merge_field` can be prefilled through the API.** A field object carries four
 identifiers — `uuid`, `name`, `field_id`, `merge_field` — and only the last one is a valid key for `fields`.
-The other three are rejected: `field_id` and `name` are dropped silently by `documents_create` and produce
-`400 There are no such fields in the document` from `documents_update`. Verified against
-`8q5FqeodqheYCQBCBBBqCW` on 2026-08-06.
+The other three are rejected: `field_id` and `name` are dropped silently by `PandaDoc:documents_create` and produce
+`400 There are no such fields in the document` from `PandaDoc:documents_update`. Verified against a
+template in this workspace on 2026-08-06.
 
 So split `fields[]` in two before you promise anything:
 
@@ -89,11 +89,10 @@ So split `fields[]` in two before you promise anything:
   by hand after they open the document, or the template gets merge fields added in the PandaDoc editor.
 
 If every field you needed falls in the second group, **say so before creating anything**. Several HR
-templates in this workspace are built that way (`7gocasE6Tr2GdSqae2HtwT`,
-`riFxJ8qcGRpGJiukZVVBPc` — all fields `merge_field: null`, all named `Text`), and on those the prefill this
-skill exists to do is simply not available. Offer the two real options — add merge fields to the template,
-or send it blank for the joiner to complete — and let the user choose. Do not create an empty document and
-present it as prefilled paperwork.
+templates in this workspace are built that way (all fields `merge_field: null`, all named `Text`), and on
+those the prefill this skill exists to do is simply not available. Offer the two real options — add merge
+fields to the template, or send it blank for the joiner to complete — and let the user choose. Do not
+create an empty document and present it as prefilled paperwork.
 
 Watch for a second trap: **one merge name fills every field that shares it, with the same value.** If name,
 ID and city all sit behind one merge field, they cannot hold three different values, and the template needs
@@ -120,7 +119,7 @@ to the draft link. A question on its own, with no document, is not what they ask
 
 ### Step 3: Create with everything you can prefill
 
-`documents_create` from the template, passing:
+`PandaDoc:documents_create` from the template, passing:
 
 - `recipients` — the joiner, with `email`, `first_name`, `last_name`, the **exact** role name from Step 2,
   and `delivery_methods: {email: true, sms: false}`
@@ -134,20 +133,20 @@ Recipient tokens fill themselves: passing `recipients` populates `Client.FirstNa
 `Sender.*` and `Document.CreatedDate` without your listing them. Pass explicitly only the ones that carry
 values the recipient record does not, such as `Client.Company`.
 
-Poll `documents_status_get` until `Draft`.
+Poll `PandaDoc:documents_status_get` until `Draft`.
 
 ### Step 4: Assign anything left unassigned
 
-`documents_details_get` and check `fields[]`. Any field whose `assigned_to.id` is empty belongs to a role
+`PandaDoc:documents_details_get` and check `fields[]`. Any field whose `assigned_to.id` is empty belongs to a role
 with no recipient and will block sending.
 
-Fix with `documents_fields_assign`, passing the field UUIDs and the recipient. Note this tool **assigns
+Fix with `PandaDoc:documents_fields_assign`, passing the field UUIDs and the recipient. Note this tool **assigns
 existing fields only** — it cannot create fields, so if the template lacks a field you need, the template has
 to change in PandaDoc.
 
 ### Step 5: Verify the prefill, and list every empty data field
 
-Still in `documents_details_get`, walk `fields[]` and confirm:
+Still in `PandaDoc:documents_details_get`, walk `fields[]` and confirm:
 
 1. **Every field you intended to prefill has `is_filled: true` and the value you passed.** A key that
    matched no merge field is dropped silently — the create call succeeds and the field stays empty. This is
@@ -156,7 +155,7 @@ Still in `documents_details_get`, walk `fields[]` and confirm:
    If a field came back empty, do not assume a typo and retry with a different key. Check `merge_field` on
    that field first: when it is `null`, no key exists and retrying cannot work. Say the field is not
    API-fillable and leave it for the empty-fields list below.
-2. **Every `signature` and `initials` field has a non-empty `assigned_to.id`**, or `documents_send` rejects
+2. **Every `signature` and `initials` field has a non-empty `assigned_to.id`**, or `PandaDoc:documents_send` rejects
    the document with `Not all signature, initials fields were assigned`.
 3. **No recipient has `sms: true` without a phone number.**
 
@@ -178,9 +177,12 @@ to clear it. Name each field; do not reprint values (see *Handling personal data
 > Before I can send, these fields are empty: `Salary`, `Start Date`. For each, give me a value or tell me to
 > leave it for the signer to fill.
 
-Apply supplied values with `documents_update` (merge names as keys), re-read `documents_details_get`, and
+A draft-only request does not skip this. Create the draft, and put the question in the same response as the
+link. Saying a field is blank is a statement, not a question — the user still has to be asked for the value.
+
+Apply supplied values with `PandaDoc:documents_update` (merge names as keys), re-read `PandaDoc:documents_details_get`, and
 rebuild the list. One exception: a field with `merge_field: null` cannot be filled through the API at all
-(`documents_update` returns `400 There are no such fields in the document`), so a value the user gives for
+(`PandaDoc:documents_update` returns `400 There are no such fields in the document`), so a value the user gives for
 it cannot land — it can only be waived, and the joiner fills it by hand after opening the document. A field
 the user fills must now read `is_filled: true`; a waived field comes off the list. Only when every field on
 the list is filled or waived do you offer to send.
@@ -191,7 +193,7 @@ purpose. Ask:
 > Ready to send **"\<name\>"** to **\<email\>**? \<N\> fields prefilled, \<W\> left blank by your choice
 > (\<field names\>), plus the signer's own fields (signature, and any others assigned to them).
 
-Only on an explicit yes, `documents_send` with a `subject` and short `message`. Retry once on `409 The
+Only on an explicit yes, `PandaDoc:documents_send` with a `subject` and short `message`. Retry once on `409 The
 document isn't ready for a status transition yet`.
 
 **A yes has to come from the user.** Not from your own reasoning that sending is obviously what they
@@ -226,13 +228,13 @@ Read `merge_field` on that field before doing anything else. It decides which of
 have, and they have different fixes.
 
 - **`merge_field` is null.** The field is not addressable by the API at all. No key works — `field_id`,
-  `uuid` and `name` are all rejected, and `documents_update` answers
+  `uuid` and `name` are all rejected, and `PandaDoc:documents_update` answers
   `400 There are no such fields in the document: <what you passed>`. Retrying with another key wastes the
   user's time. Tell them the template needs a merge field added in the PandaDoc editor, or that the joiner
   fills this one by hand.
 - **`merge_field` is set but the value did not land.** Then the key really was wrong. Use the merge name
   verbatim, including spaces and punctuation — merge names like `MM / DD / YYYY` are common — and set it
-  with `documents_update`.
+  with `PandaDoc:documents_update`.
 
 ### Two fields need different values but share one merge field
 
@@ -242,8 +244,8 @@ wrong.
 
 ### `400 Not all signature, initials fields were assigned`
 
-A signature field has an empty `assigned_to`. Assign it with `documents_fields_assign`, or add the missing
-recipient with `documents_update` if a whole role is unrepresented.
+A signature field has an empty `assigned_to`. Assign it with `PandaDoc:documents_fields_assign`, or add the missing
+recipient with `PandaDoc:documents_update` if a whole role is unrepresented.
 
 ### `documents_fields_assign` will not create the field I need
 
@@ -256,7 +258,7 @@ distinction is usually legal, not cosmetic.
 
 ### `A phone number is required`
 
-The recipient defaulted to SMS delivery. `documents_update` with
+The recipient defaulted to SMS delivery. `PandaDoc:documents_update` with
 `delivery_methods: {email: true, sms: false}`.
 
 ### `409` on send

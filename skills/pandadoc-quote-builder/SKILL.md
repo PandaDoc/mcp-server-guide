@@ -6,7 +6,7 @@ complexity: advanced
 prerequisites: [PandaDoc]
 description: Build a priced PandaDoc quote or proposal from a template — fill the pricing table and variables, verify the totals and discount actually landed as asked, confirm, then send for signature. Use when someone wants a quote, proposal or priced offer created for a client.
 tags: [pandadoc, quotes, proposals, pricing, e-signature, sales]
-version: "0.1.1"
+version: "0.1.2"
 metadata:
   visibility: public
 ---
@@ -23,8 +23,8 @@ produce different numbers than you asked for.** Most of this skill is about catc
 
 ## Prerequisites
 
-The PandaDoc MCP Server must be connected. Required tools: `templates_list`, `templates_details_get`,
-`documents_create`, `documents_status_get`, `documents_details_get`, `documents_update`, `documents_send`.
+The PandaDoc MCP Server must be connected. Required tools: `PandaDoc:templates_list`, `PandaDoc:templates_details_get`,
+`PandaDoc:documents_create`, `PandaDoc:documents_status_get`, `PandaDoc:documents_details_get`, `PandaDoc:documents_update`, `PandaDoc:documents_send`.
 If they are missing, tell the user the MCP Server is not connected and point them at
 <https://mcp.pandadoc.com>.
 
@@ -57,7 +57,7 @@ Four behaviours, all verified against the live MCP, that a naive flow gets wrong
 3. **Optional rows that are not selected are excluded from the total.** A row with
    `options.optional_selected: false` contributes nothing, so a total computed by summing line items
    yourself will disagree with the document.
-4. **Some templates cannot be read at all.** `templates_details_get` can fail with
+4. **Some templates cannot be read at all.** `PandaDoc:templates_details_get` can fail with
    `PANDADOC_API_RESPONSE_INVALID` on a specific template, and every document created from it fails the
    same way — while creation itself succeeds. So a successful create does not mean you can verify the
    result.
@@ -68,7 +68,7 @@ Four behaviours, all verified against the live MCP, that a naive flow gets wrong
 
 ### Step 1: Find the template
 
-Call `templates_list` with `q` set to the user's wording and `count: 10`.
+Call `PandaDoc:templates_list` with `q` set to the user's wording and `count: 10`.
 
 `q` is **not** a name substring match despite what the parameter description says — a search for "NDA"
 has returned a template called `Declaration H&S standards and regulations`. So:
@@ -87,7 +87,7 @@ without one, and the workarounds that look available all fail. Verified 2026-08-
   `fields: []` and its recipient is silently downgraded to `recipient_type: "CC"`, so nobody can sign it.
 - **`source: "file"` cannot either.** It takes no `pricing_tables`. `parse_form_fields` handles fields, not
   pricing.
-- **`templates_create` is not a way round it.** It builds a template from a PDF at a public HTTPS URL —
+- **`PandaDoc:templates_create` is not a way round it.** It builds a template from a PDF at a public HTTPS URL —
   which a chat cannot produce — and a PDF-derived template does not carry a structured pricing table
   anyway.
 
@@ -102,7 +102,7 @@ the **currency** the user wants, because currency cannot be set through the API.
 
 ### Step 2: Inspect the template — and handle it being unreadable
 
-Call `templates_details_get` with the chosen ID. You need three things from it:
+Call `PandaDoc:templates_details_get` with the chosen ID. You need three things from it:
 
 - **`pricing.tables[]`** — the name of the pricing table you will populate. You must pass this name
   exactly; pricing is matched by name, not position.
@@ -121,7 +121,7 @@ are not:
 - **`tables` and `quotes` both empty** — the template genuinely has no pricing block. Say so and ask for
   one that has.
 - **`tables` empty but `quotes` populated** — the template uses a Quote block. It *has* pricing, but the
-  API cannot write to it: there is no `quotes` parameter on `documents_create`, and `pricing_tables` is
+  API cannot write to it: there is no `quotes` parameter on `PandaDoc:documents_create`, and `pricing_tables` is
   accepted and then **silently ignored**, leaving a document with the template's original empty rows and
   `total: "0"`. Do not attempt it and do not report a total from such a document. Tell the user this
   template's pricing block is a Quote and cannot be filled through the API, and ask for one built on a
@@ -158,7 +158,7 @@ surcharge when the name happens to match: passing `−5` under `"Discount"` on a
 surcharge, not 10% off.
 
 One caveat that makes Step 6 mandatory: **the template's discount name cannot be read from
-`templates_details_get`.** The template response carries `summary.discount` but leaves `items[].discounts`
+`PandaDoc:templates_details_get`.** The template response carries `summary.discount` but leaves `items[].discounts`
 empty — names only appear on created documents. `"Discount"` is the observed default and a sound first
 guess, but it is a guess. Verify, then correct.
 
@@ -166,7 +166,7 @@ Whichever reading you applied, **say so in your output.**
 
 ### Step 4: Create the document
 
-Call `documents_create`:
+Call `PandaDoc:documents_create`:
 
 ```json
 {
@@ -202,19 +202,19 @@ Two things that will otherwise cost you a round trip:
 
 ### Step 5: Wait for draft
 
-`documents_create` returns status `Uploaded`. Poll `documents_status_get` until it reads `Draft`. Usually
+`PandaDoc:documents_create` returns status `Uploaded`. Poll `PandaDoc:documents_status_get` until it reads `Draft`. Usually
 one or two calls.
 
 Be aware that `Draft` does **not** guarantee the document is ready for a status transition — see Step 7.
 
 ### Step 6: Verify the numbers — do not skip this
 
-Call `documents_details_get` and check, before showing the user anything:
+Call `PandaDoc:documents_details_get` and check, before showing the user anything:
 
 1. **The effective discount matches what the user asked for.** Compute
    `summary.discount / summary.subtotal` and compare against `T`. A **negative** `summary.discount` means
    you produced a surcharge — the name did not behave as expected. Either way, if it does not match,
-   correct it with `documents_update` passing the target value directly, then re-read and check again.
+   correct it with `PandaDoc:documents_update` passing the target value directly, then re-read and check again.
    Never report a figure you have not verified.
 2. **Every line item is present** with the right `qty` and `price`, and `subtotal` per row is what you
    expect.
@@ -236,14 +236,14 @@ currency — plus which template and which discount reading you used. Then ask:
 
 > Ready to send **"\<name\>"** to **\<email\>**? Subtotal \<X\>, \<T\>% discount, total \<Y\> \<currency\>.
 
-Only on an explicit yes, call `documents_send` with a `subject` and short `message`.
+Only on an explicit yes, call `PandaDoc:documents_send` with a `subject` and short `message`.
 
 If it returns `409 The document isn't ready for a status transition yet`, wait a moment and retry once.
-This happens even when `documents_status_get` already reported `Draft` — it is a known race, not an error
+This happens even when `PandaDoc:documents_status_get` already reported `Draft` — it is a known race, not an error
 in your input.
 
 If it returns `400 Not all signature, initials fields were assigned`, a signing role has no recipient.
-Read `roles[]` again, add the missing recipient with `documents_update`, then retry.
+Read `roles[]` again, add the missing recipient with `PandaDoc:documents_update`, then retry.
 
 If the user does not want it sent, leave it as a draft and give them the link:
 `https://app.pandadoc.com/a/#/documents/<document_id>`
@@ -273,7 +273,7 @@ Check for optional rows. A row with `options.optional_selected: false` is exclud
 ### The discount came out higher than requested
 
 Your `discount.name` did not match the template's, so yours was appended rather than replacing it.
-Re-issue with `name: "Discount"`, or correct the document with `documents_update` passing the target value
+Re-issue with `name: "Discount"`, or correct the document with `PandaDoc:documents_update` passing the target value
 directly.
 
 ### The discount came out negative — the total is higher than the subtotal
