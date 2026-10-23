@@ -6,7 +6,7 @@ complexity: advanced
 prerequisites: [PandaDoc]
 description: Build a register of signed contracts with their key terms — counterparty, dates, value and negotiated provisions — from PandaDoc's extracted metadata, labelled with how confident each value is. Use when someone wants a contract register, key terms pulled out, or all agreements for a customer.
 tags: [pandadoc, contracts, metadata, legal, register]
-version: "0.1.0"
+version: "0.1.1"
 metadata:
   visibility: public
 ---
@@ -23,11 +23,11 @@ them**.
 
 ## Prerequisites
 
-The PandaDoc MCP Server must be connected. Required tools: `documents_list`, `documents_search`,
-`documents_details_get`, `documents_metadata_batch_get`. If they are missing, say so and point at
+The PandaDoc MCP Server must be connected. Required tools: `PandaDoc:documents_list`, `PandaDoc:documents_search`,
+`PandaDoc:documents_details_get`, `PandaDoc:documents_metadata_batch_get`. If they are missing, say so and point at
 <https://mcp.pandadoc.com>.
 
-There is no `documents_metadata_get`. Every metadata read goes through `documents_metadata_batch_get`,
+There is no `documents_metadata_get`. Every metadata read goes through `PandaDoc:documents_metadata_batch_get`,
 which takes 1-40 IDs, so one document is a one-element `document_ids`. It also takes `field_keys` when
 you want only some of the fields back.
 
@@ -35,7 +35,7 @@ you want only some of the fields back.
 
 ## What extraction gives you, and what it costs
 
-`documents_metadata_batch_get` returns AI-extracted fields. Observed on a completed contract:
+`PandaDoc:documents_metadata_batch_get` returns AI-extracted fields. Observed on a completed contract:
 
 `Counterparty name`, `Counterparty address`, `Counterparty signer name`, `Internal party legal name`,
 `Internal signer name`, `Agreement date`, plus term checkboxes — `Audit rights`, `Exclusivity`,
@@ -53,19 +53,19 @@ Three constraints that must reach the user:
    is not completed yet), `extraction_failed` (terminal — contact support), `not_found` and
    `access_denied`. One unusable ID does not fail the whole call, so read the status per document.
 3. **There is no monetary field.** Contract value is not in metadata — it comes from
-   `documents_details_get` → `pricing.total`.
+   `PandaDoc:documents_details_get` → `pricing.total`.
 
 ---
 
 ## The search limitation — say it out loud
 
-**Metadata is not queryable.** `documents_metadata_batch_get` takes document IDs, not a filter — it reads
+**Metadata is not queryable.** `PandaDoc:documents_metadata_batch_get` takes document IDs, not a filter — it reads
 by document, and `field_keys` narrows which fields come back, not which documents. There is no way to ask
 "which contracts have `Counterparty name = Acme`".
 
 So building a register for one customer means:
 
-1. narrow with `documents_search`, which is **full text and requires a non-empty `query`**
+1. narrow with `PandaDoc:documents_search`, which is **full text and requires a non-empty `query`**
 2. read metadata for each hit
 3. keep the ones whose `Counterparty name` actually matches
 
@@ -84,9 +84,9 @@ the extracted counterparty" is one you can.
 
 ### Step 1: Establish the candidate set
 
-- **Whole register:** `documents_list` with `status: "Completed"`, then `status: "Paid"`, `count: 100`. No
+- **Whole register:** `PandaDoc:documents_list` with `status: "Completed"`, then `status: "Paid"`, `count: 100`. No
   search term needed, so no false negatives.
-- **One customer:** `documents_search` with the customer name as `query`, `status: ["Completed", "Paid"]`.
+- **One customer:** `PandaDoc:documents_search` with the customer name as `query`, `status: ["Completed", "Paid"]`.
   Try the obvious variants — full legal name, short name, domain — and say which ones you tried.
 
 Do **not** use a `signature_date` window to establish "signed": that filter returns documents nobody signed.
@@ -94,16 +94,16 @@ Confirm signature per recipient instead (below).
 
 ### Step 2: Confirm each one is genuinely signed
 
-For each candidate, `documents_details_get` and check `recipients[]`: at least one entry with
+For each candidate, `PandaDoc:documents_details_get` and check `recipients[]`: at least one entry with
 `recipient_type: "signer"` and a non-null `signature_date`.
 
-A document flipped with `documents_status_change` reads `Completed` with `date_completed` set, but every
+A document flipped with `PandaDoc:documents_status_change` reads `Completed` with `date_completed` set, but every
 `signature_date` is `null` and signature fields are `is_filled: false`. It is not a signed contract. Either
 exclude it or list it separately as manually completed.
 
 ### Step 3: Pull metadata
 
-Use `documents_metadata_batch_get` for 1–40 documents at a time rather than a call each. Pass
+Use `PandaDoc:documents_metadata_batch_get` for 1–40 documents at a time rather than a call each. Pass
 `field_keys` when you only need some of the fields.
 
 Handle the per-document `status`. Two of them are retryable: `extraction_pending`, once after
@@ -114,7 +114,7 @@ dropping them silently.
 
 ### Step 4: Add value
 
-`documents_details_get` → `pricing.total`, currency from `pricing.tables[].currency` — or from
+`PandaDoc:documents_details_get` → `pricing.total`, currency from `pricing.tables[].currency` — or from
 `pricing.quotes[].currency` when `tables` is empty, which is how a Quote-block document reports it.
 Reading only `tables` drops the currency on those, and an unlabelled amount is worse than none.
 
@@ -161,7 +161,7 @@ The document is not completed. Extraction only runs on completed documents. Noth
 
 ### `documents_metadata_get` is not a tool
 
-It does not exist on the MCP server. Use `documents_metadata_batch_get` with a one-element
+It does not exist on the MCP server. Use `PandaDoc:documents_metadata_batch_get` with a one-element
 `document_ids`.
 
 ### Every field says `pending`

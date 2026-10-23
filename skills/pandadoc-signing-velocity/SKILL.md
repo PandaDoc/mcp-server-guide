@@ -6,7 +6,7 @@ complexity: advanced
 prerequisites: [PandaDoc]
 description: Build a signing pipeline report — status counts, average time to sign, value in flight, and documents that are stuck. Computed client-side with the sample size and method stated. Use when someone wants a weekly signing report or pipeline overview.
 tags: [pandadoc, reporting, metrics, pipeline, e-signature]
-version: "0.1.0"
+version: "0.1.1"
 metadata:
   visibility: public
 ---
@@ -22,7 +22,7 @@ honesty of this report depends entirely on stating what went into it.
 
 ## Prerequisites
 
-The PandaDoc MCP Server must be connected. Required tools: `documents_list`, `documents_details_get`.
+The PandaDoc MCP Server must be connected. Required tools: `PandaDoc:documents_list`, `PandaDoc:documents_details_get`.
 If they are missing, say so and point at <https://mcp.pandadoc.com>.
 
 ---
@@ -39,7 +39,7 @@ than no average, because it reads as authoritative. If you computed time-to-sign
 
 ### Step 1: Count by status
 
-`documents_list` per status, `count: 100`. Statuses worth counting for a pipeline view:
+`PandaDoc:documents_list` per status, `count: 100`. Statuses worth counting for a pipeline view:
 
 - **In flight:** `Sent`, `Viewed`, `Waiting for Approval`, `External Review`
 - **Finished:** `Completed`, `Paid`
@@ -53,7 +53,7 @@ say the count is a floor rather than a total.
 
 Only `Completed` and `Paid` documents have a duration. For each, you need:
 
-- `date_sent` — **only in `documents_details_get`**, one call per document
+- `date_sent` — **only in `PandaDoc:documents_details_get`**, one call per document
 - `recipients[].signature_date` — also only in details, one entry per recipient
 
 The interval is `date_sent → the latest non-null recipients[].signature_date`. Not `date_completed`:
@@ -61,7 +61,7 @@ that is when the document closed, which is not when it was signed. Cap the numbe
 (30 is reasonable) and say if you capped.
 
 **A document with no non-null `signature_date` has no interval at all.** That single rule is also what
-keeps force-completed documents out: a document flipped via `documents_status_change` has
+keeps force-completed documents out: a document flipped via `PandaDoc:documents_status_change` has
 `date_completed` set but every `recipients[].signature_date` as `null` and signature fields
 `is_filled: false`, so it contributes nothing to the average and must not be counted as signed.
 
@@ -126,7 +126,7 @@ measured from, and what was excluded and why.
 
 ### The average time to sign looks implausibly fast
 
-Check for force-completed documents. `documents_status_change` sets `date_completed` immediately, so a
+Check for force-completed documents. `PandaDoc:documents_status_change` sets `date_completed` immediately, so a
 document created and flipped in the same minute reports a near-zero duration if you measure to
 `date_completed`. Measure to the latest `recipients[].signature_date` instead, and exclude anything where
 every one of them is `null`.
@@ -143,10 +143,10 @@ in the same account. Report per currency.
 
 ### A status count seems capped
 
-`documents_list` maxes at `count: 100`. If a status returned exactly 100, treat it as a floor and page or
+`PandaDoc:documents_list` maxes at `count: 100`. If a status returned exactly 100, treat it as a floor and page or
 say so.
 
 ### I cannot get `date_sent` without a call per document
 
-Correct — it and `recipients[].signature_date` exist only in `documents_details_get`. Cap the number of documents you expand and disclose the
+Correct — it and `recipients[].signature_date` exist only in `PandaDoc:documents_details_get`. Cap the number of documents you expand and disclose the
 cap rather than silently truncating the sample.

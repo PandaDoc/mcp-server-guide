@@ -6,7 +6,7 @@ complexity: advanced
 prerequisites: [PandaDoc]
 description: Turn a signed quote or proposal into an invoice — find quotes that completed and have not been invoiced yet, reuse their pricing, create the invoice from a template, and send it on confirmation. Use when someone asks to invoice a closed deal or wants signed quotes swept for invoicing.
 tags: [pandadoc, invoicing, finance, quotes, e-signature]
-version: "0.1.0"
+version: "0.1.1"
 metadata:
   visibility: public
 ---
@@ -22,9 +22,9 @@ Two structural facts shape this: **there are no webhooks**, so this is a sweep r
 
 ## Prerequisites
 
-The PandaDoc MCP Server must be connected. Required tools: `documents_list`, `documents_details_get`,
-`templates_list`, `templates_details_get`, `documents_create`, `documents_status_get`, `documents_update`,
-`documents_send`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
+The PandaDoc MCP Server must be connected. Required tools: `PandaDoc:documents_list`, `PandaDoc:documents_details_get`,
+`PandaDoc:templates_list`, `PandaDoc:templates_details_get`, `PandaDoc:documents_create`, `PandaDoc:documents_status_get`, `PandaDoc:documents_update`,
+`PandaDoc:documents_send`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
 
 **An invoice template must exist in the workspace, with a pricing table (not a Quote block) in the
 quote's currency.** The reference account has two "invoice"-named templates and neither qualifies:
@@ -42,10 +42,10 @@ schedule or on demand, and treat it as a sweep over recently completed quotes.
 **No invoiced flag.** PandaDoc does not record that a quote has been invoiced. Before creating anything you
 must decide how you will know, and use the same method every run. Options, best first:
 
-1. **Tag the source quote** after invoicing — documents carry `tags`, settable via `documents_update`. A tag
+1. **Tag the source quote** after invoicing — documents carry `tags`, settable via `PandaDoc:documents_update`. A tag
    like `invoiced` is durable, visible in the UI, and survives across runs. This is the recommended approach.
 2. **Name convention** on the invoice, e.g. `Invoice - <quote name>`, then search for it before creating.
-   Works, but depends on `documents_search` full text, which is fuzzy and eventually consistent.
+   Works, but depends on `PandaDoc:documents_search` full text, which is fuzzy and eventually consistent.
 3. **Ask the user each time.** Safe but does not scale to a scheduled sweep.
 
 Whichever you use, **say so in your output**, and if you cannot establish invoiced-or-not for a quote, ask
@@ -57,13 +57,13 @@ rather than assume. Sending a customer a second invoice for the same work is wor
 
 ### Step 1: Find signed quotes
 
-`documents_list` with `status: "Completed"`, then `status: "Paid"`, `count: 100`.
+`PandaDoc:documents_list` with `status: "Completed"`, then `status: "Paid"`, `count: 100`.
 
 Narrow to actual quotes — those with a populated `pricing` block. A signed NDA has no value to invoice.
 
-**Confirm each was genuinely signed.** `documents_details_get` → `recipients[]` must contain a
+**Confirm each was genuinely signed.** `PandaDoc:documents_details_get` → `recipients[]` must contain a
 `recipient_type: "signer"` with a non-null `signature_date`. A document flipped with
-`documents_status_change` reads `Completed` but nobody signed it, and invoicing against it would bill a
+`PandaDoc:documents_status_change` reads `Completed` but nobody signed it, and invoicing against it would bill a
 customer for a deal that was never closed.
 
 ### Step 2: Exclude anything already invoiced
@@ -72,7 +72,7 @@ Apply the method from above. If tagging, skip quotes whose `tags` include your m
 
 ### Step 3: Read the pricing to carry over
 
-From `documents_details_get` on the quote:
+From `PandaDoc:documents_details_get` on the quote:
 
 - `pricing.tables[].items[]` — `name`, `qty`, `price`, `subtotal` per line
 - `pricing.tables[].summary` — `subtotal`, `discount`, `tax`, `fee`, `total`
@@ -91,8 +91,8 @@ invoice more than the customer agreed to.
 
 ### Step 4: Find the invoice template
 
-`templates_list` with `q: "invoice"`. Remember `q` is fuzzy — confirm the match rather than trusting a single
-hit. Read `templates_details_get` for `roles[]`, `tokens[]` and the pricing table name.
+`PandaDoc:templates_list` with `q: "invoice"`. Remember `q` is fuzzy — confirm the match rather than trusting a single
+hit. Read `PandaDoc:templates_details_get` for `roles[]`, `tokens[]` and the pricing table name.
 
 If there is no invoice template, **stop and say so.** Do not improvise one: markdown-created documents have
 no signature fields and their recipient is silently downgraded to CC, so what you would produce is unusable.
@@ -105,9 +105,9 @@ create an invoice showing `total: "0"` with no error anywhere. A zero invoice th
 than no invoice. Say the template uses a Quote block and ask for one built on a pricing table.
 
 **Its currency must match the quote's.** `pricing.tables[].currency` is fixed by the template and cannot be
-set through the API by any route. `documents_create` rejects a different one with
+set through the API by any route. `PandaDoc:documents_create` rejects a different one with
 `400 Wrong request currency … mismatch template currency` and leaves a broken document behind.
-`documents_update` is worse: it returns `{"updated": true}`, applies your row data, and **silently keeps the
+`PandaDoc:documents_update` is worse: it returns `{"updated": true}`, applies your row data, and **silently keeps the
 template's currency** — so a skill that "fixes" the currency after the fact gets a success response and
 reports a denomination the document does not have. If you ever write pricing, re-read
 `pricing.tables[].currency` afterwards rather than trusting the call. Worse is the failure that does *not* error: omit the currency, and the
@@ -118,7 +118,7 @@ yourself; you have no rate and no authority to pick one.
 
 ### Step 5: Create the invoice
 
-`documents_create` from the invoice template, passing the carried-over line items in `pricing_tables` under
+`PandaDoc:documents_create` from the invoice template, passing the carried-over line items in `pricing_tables` under
 the **exact** table name from Step 4.
 
 On the discount: `discount.name` decides whether your value replaces the template's or is added to it —
@@ -128,11 +128,11 @@ delta.
 
 `options` is required on every row even though the schema marks it optional.
 
-Poll `documents_status_get` until `Draft`.
+Poll `PandaDoc:documents_status_get` until `Draft`.
 
 ### Step 6: Verify the invoice matches the quote
 
-`documents_details_get` on the invoice and compare against the quote, before showing anything:
+`PandaDoc:documents_details_get` on the invoice and compare against the quote, before showing anything:
 
 - same line items, same quantities, same unit prices
 - `summary.subtotal` matches
@@ -140,15 +140,15 @@ Poll `documents_status_get` until `Draft`.
 - `pricing.total` matches the quote's total
 - currency matches
 
-If anything differs, correct it with `documents_update` and re-read. Reporting an invoice total you have not
+If anything differs, correct it with `PandaDoc:documents_update` and re-read. Reporting an invoice total you have not
 compared against the quote is how a customer gets billed the wrong amount.
 
 ### Step 7: Confirm, send, mark
 
 Show the comparison — quote total against invoice total — and ask before sending. Only on an explicit yes,
-`documents_send`. Retry once on `409`.
+`PandaDoc:documents_send`. Retry once on `409`.
 
-**After a successful send, apply your invoiced marker to the source quote** with `documents_update`. If you
+**After a successful send, apply your invoiced marker to the source quote** with `PandaDoc:documents_update`. If you
 skip this, the next sweep invoices it again.
 
 Report: the quote, the invoice, both totals, that they match, the recipient, and that the source quote is now
@@ -172,7 +172,7 @@ marked.
 
 ### There is no invoice template
 
-Stop and say so. Generating one is not viable — markdown documents cannot be signed and `templates_create`
+Stop and say so. Generating one is not viable — markdown documents cannot be signed and `PandaDoc:templates_create`
 needs a PDF at a public HTTPS URL.
 
 ### The invoice total is higher than the quote
@@ -183,7 +183,7 @@ Check `options.optional_selected` on every line.
 ### The discount came out wrong
 
 `discount.name` did not behave as expected. Pass the target percentage under `"Discount"` and verify; correct
-with `documents_update` using the direct value if it still differs.
+with `PandaDoc:documents_update` using the direct value if it still differs.
 
 ### A quote got invoiced twice
 
@@ -192,5 +192,5 @@ after every send, and check it before every create.
 
 ### I invoiced a deal that was not actually closed
 
-`Completed` status alone does not mean signed — it can be set manually with `documents_status_change`, which
+`Completed` status alone does not mean signed — it can be set manually with `PandaDoc:documents_status_change`, which
 leaves every `recipients[].signature_date` as `null`. Always check signature dates before invoicing.

@@ -6,7 +6,7 @@ complexity: advanced
 prerequisites: [PandaDoc]
 description: Create a document from a template and route it through its internal approval chain — read the approval steps, send through the chain where the API allows it, and hand off to PandaDoc where it does not. Use when a document needs internal sign-off before it reaches the counterparty.
 tags: [pandadoc, approvals, workflow, e-signature, bizops]
-version: "0.2.0"
+version: "0.2.1"
 metadata:
   visibility: public
 ---
@@ -24,9 +24,9 @@ sent at all — a group whose `type` is `selectable` — and Step 3 explains why
 
 ## Prerequisites
 
-The PandaDoc MCP Server must be connected. Required tools: `templates_list`, `templates_details_get`,
-`documents_create`, `documents_status_get`, `documents_details_get`, `documents_send`. Useful:
-`documents_update` to fix an unassigned signature field before retrying a send. If they are missing,
+The PandaDoc MCP Server must be connected. Required tools: `PandaDoc:templates_list`, `PandaDoc:templates_details_get`,
+`PandaDoc:documents_create`, `PandaDoc:documents_status_get`, `PandaDoc:documents_details_get`, `PandaDoc:documents_send`. Useful:
+`PandaDoc:documents_update` to fix an unassigned signature field before retrying a send. If they are missing,
 say so and point at <https://mcp.pandadoc.com>.
 
 An **approval workflow must be configured on the template or document** in PandaDoc. This skill cannot
@@ -37,7 +37,7 @@ through it. Configuring one is a UI action in PandaDoc.
 
 ## How approvals appear in the API
 
-`documents_details_get` returns **`approval_execution`**. It is `null` when no approval workflow applies
+`PandaDoc:documents_details_get` returns **`approval_execution`**. It is `null` when no approval workflow applies
 to the document. When populated it looks like this:
 
 ```json
@@ -117,13 +117,13 @@ every direct-assignee step — always check `group` for `null` and fall back to 
   the document meets some criterion. An empty `conditions` array is presumed to mean the step always
   applies; the element shape of a populated one has not been observed.
 - **`sender` / `sender_message`** are `null` on a `Draft` and populate at send. `sender_message` is simply
-  the `message` passed to `documents_send`, not a workflow setting.
+  the `message` passed to `PandaDoc:documents_send`, not a workflow setting.
 - **`date_sent` stays `null`** while a document is in `Waiting for Approval`. It is not a signal that the
   document did or did not go out — read `status`.
 
 ### Sending
 
-`documents_send` accepts **`selected_approvers`**, shaped as:
+`PandaDoc:documents_send` accepts **`selected_approvers`**, shaped as:
 
 ```json
 { "steps": [ { "id": "<step id>",
@@ -149,7 +149,7 @@ consequence is that approver selection is unavailable through MCP, which is why 
 therefore moot and remains unknown — the request never gets far enough for it to matter.
 
 `Sent`, `Viewed`, `Waiting for Approval`, `Approved` and `Rejected` are **system-set** statuses —
-`documents_status_change` cannot set them. Only `Completed`, `Paid`, `Expired`, `Declined` can be set
+`PandaDoc:documents_status_change` cannot set them. Only `Completed`, `Paid`, `Expired`, `Declined` can be set
 manually. (Carried from the tool schema, not re-verified live.)
 
 ---
@@ -158,16 +158,16 @@ manually. (Carried from the tool schema, not re-verified live.)
 
 ### Step 1: Create the document
 
-Find and inspect the template as normal — `templates_list` (remember `q` is fuzzy, so confirm the match),
-then `templates_details_get` for `roles[]` and `tokens[]`. Create with `documents_create`, using the exact
+Find and inspect the template as normal — `PandaDoc:templates_list` (remember `q` is fuzzy, so confirm the match),
+then `PandaDoc:templates_details_get` for `roles[]` and `tokens[]`. Create with `PandaDoc:documents_create`, using the exact
 role names, and `delivery_methods: {email: true, sms: false}`.
 
-Poll `documents_status_get` until `Draft` — `documents_create` returns `Uploaded` first, and the chain is
+Poll `PandaDoc:documents_status_get` until `Draft` — `PandaDoc:documents_create` returns `Uploaded` first, and the chain is
 not readable until the document reaches `Draft`.
 
 ### Step 2: Read the approval chain
 
-`documents_details_get` and look at `approval_execution`.
+`PandaDoc:documents_details_get` and look at `approval_execution`.
 
 **If it is `null`, there is no approval workflow on this document.** Say so plainly and ask whether to send
 it directly. Do not pretend to route something that has no chain — and do not fabricate a
@@ -183,7 +183,7 @@ another.
 
 ### Step 3: Check whether the chain can be sent at all
 
-Read `group.type` on every step before going near `documents_send`.
+Read `group.type` on every step before going near `PandaDoc:documents_send`.
 
 - **Direct-assignee step** (`group: null`) — sendable. There is no selection to make.
 - **`group.type: "optional"`** — sendable. Any member of the group may approve. You are not choosing an
@@ -191,7 +191,7 @@ Read `group.type` on every step before going near `documents_send`.
 - **`group.type: "selectable"`** — **not sendable. Stop here and go to Step 3a.**
 
 A `selectable` group requires the sender to nominate one approver, and that nomination cannot be expressed
-through this MCP server. `documents_send` takes a `selected_approvers` payload, but PandaDoc requires
+through this MCP server. `PandaDoc:documents_send` takes a `selected_approvers` payload, but PandaDoc requires
 `group.name` inside it and the tool's schema has no such property, so the field is dropped in transit.
 Both routes therefore fail, and neither is recoverable in-skill:
 
@@ -222,7 +222,7 @@ whole explanation they need.
 >
 > 1. Open it: `https://app.pandadoc.com/a/#/documents/<document id>`
 > 2. Send it from there — you'll be asked to pick the approver
-> 3. Choose **Roman Vybornov** or **Taras Khvyl**
+> 3. Choose **\<Approver A\>** or **\<Approver B\>**
 >
 > It'll go to them for approval first; it won't reach the counterparty until that's done.
 
@@ -230,19 +230,19 @@ Never ask "who should approve?" on a selectable chain. You could not act on the 
 
 ### Step 4: Send through the chain
 
-Only reached when every step is a direct assignee or an `optional` group. Call `documents_send` with
+Only reached when every step is a direct assignee or an `optional` group. Call `PandaDoc:documents_send` with
 `subject` and `message` and **no `selected_approvers`** — there is nothing to select on these shapes, and
 the parameter cannot be sent successfully anyway (Step 3).
 
 - `409 The document isn't ready for a status transition yet` — retry once. Known race even after `Draft`.
 - `400 NOT_ALL_FIELDS_WERE_ASSIGNED` — a signing role has no recipient, so its signature and initials
   fields are unassigned. Create the document with a recipient for **every** role, not just the
-  counterparty, or fix it with `documents_update` before retrying.
+  counterparty, or fix it with `PandaDoc:documents_update` before retrying.
 - `DOCUMENT_HAS_UNFILLED_VARIABLES` — the document still has empty variables, listed in
   `detail.unfilled_variables`. Ask whether to fill them or send blank; retry with
   `skip_unfilled_variables: true` only once the user has chosen.
 
-After sending, poll `documents_status_get`. Expect `Waiting for Approval` rather than `Sent` while the chain
+After sending, poll `PandaDoc:documents_status_get`. Expect `Waiting for Approval` rather than `Sent` while the chain
 runs. Report the status you actually observed rather than assuming.
 
 ### Step 5: Report
@@ -322,9 +322,9 @@ Step 3a and let them select in PandaDoc.
 
 ### The send "succeeded" but the document is still `Draft`
 
-It did not succeed. `documents_send` wraps its result in an envelope, and a rejected send comes back as an
+It did not succeed. `PandaDoc:documents_send` wraps its result in an envelope, and a rejected send comes back as an
 outer success containing an inner `isError: true` with the real `error.code` — read the inner payload, not
-the outer flag. Whatever the response says, confirm with `documents_status_get`: a document that did not
+the outer flag. Whatever the response says, confirm with `PandaDoc:documents_status_get`: a document that did not
 move is a document that did not send.
 
 ### `UNABLE_TO_REQUEST_BECAUSE_NOT_ACTIVE_ASSIGNEE` on send

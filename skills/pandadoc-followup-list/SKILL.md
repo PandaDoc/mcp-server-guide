@@ -6,7 +6,7 @@ complexity: intermediate
 prerequisites: [PandaDoc]
 description: Sweep documents that are still out for signature, rank them by how long they have been waiting and what they are worth, and draft a follow-up message for each. Use when someone asks what needs chasing, which documents are stuck, or wants nudges drafted.
 tags: [pandadoc, follow-up, pipeline, e-signature, sales]
-version: "0.1.0"
+version: "0.1.1"
 metadata:
   visibility: public
 ---
@@ -22,18 +22,18 @@ or on demand.
 
 ## Prerequisites
 
-The PandaDoc MCP Server must be connected. Required tools: `documents_list`, `documents_details_get`.
-Optional: `documents_search`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
+The PandaDoc MCP Server must be connected. Required tools: `PandaDoc:documents_list`, `PandaDoc:documents_details_get`.
+Optional: `PandaDoc:documents_search`. If they are missing, say so and point at <https://mcp.pandadoc.com>.
 
 ---
 
 ## The boundary — what this skill cannot do
 
-There is **no reminder endpoint** in the PandaDoc MCP, and `documents_send` only accepts documents in
+There is **no reminder endpoint** in the PandaDoc MCP, and `PandaDoc:documents_send` only accepts documents in
 `Draft` status. A document that is already `Sent` therefore **cannot be re-sent or nudged through the API**.
 
 So this skill surfaces what is stale, ranks it, and **drafts the text**. The user sends it, or PandaDoc's
-built-in auto-reminders do. Never say or imply that a reminder was sent. Never call `documents_send` on a
+built-in auto-reminders do. Never say or imply that a reminder was sent. Never call `PandaDoc:documents_send` on a
 `Sent` document — it will fail, and trying suggests you misunderstood what you are doing.
 
 ---
@@ -58,16 +58,16 @@ Never include `Draft` (never sent), `Completed`, `Paid`, `Declined`, `Expired`.
 
 ### Step 2: Collect them
 
-`documents_list` takes a **single** `status` string, so this is one call per status. `documents_search`
+`PandaDoc:documents_list` takes a **single** `status` string, so this is one call per status. `PandaDoc:documents_search`
 accepts `status[]` but requires a non-empty `query`, which would silently narrow the sweep — so prefer
-several `documents_list` calls with `count: 100`.
+several `PandaDoc:documents_list` calls with `count: 100`.
 
 Note there is no sort parameter; default order is `date_created` descending.
 
 ### Step 3: Age each document
 
-`documents_list` gives you `date_created` and `date_modified` for free. It does **not** give you
-`date_sent` — that exists only in `documents_details_get`, one call per document.
+`PandaDoc:documents_list` gives you `date_created` and `date_modified` for free. It does **not** give you
+`date_sent` — that exists only in `PandaDoc:documents_details_get`, one call per document.
 
 Choose deliberately:
 
@@ -82,7 +82,7 @@ Bucket by age: **0–3 days / 4–7 / 8–14 / 15+**. Oldest first inside each b
 
 ### Step 4: Add value and recipient, if the user wants ranking
 
-Value and recipients live only in `documents_details_get`. If you are already calling it for `date_sent`,
+Value and recipients live only in `PandaDoc:documents_details_get`. If you are already calling it for `date_sent`,
 take them in the same pass.
 
 - value → `pricing.total`, currency → `pricing.tables[].currency`, falling back to
@@ -141,7 +141,7 @@ but not in the default `Sent`/`Viewed` set.
 ### Ages look far too long
 
 You aged from `date_created` on documents that sat in draft. Re-run with `date_sent` from
-`documents_details_get` for the affected ones.
+`PandaDoc:documents_details_get` for the affected ones.
 
 ### Value shows as 0
 
@@ -149,5 +149,5 @@ You read `grand_total`. Use `pricing.total`.
 
 ### `documents_send` fails on one of these
 
-Expected, and it should not have been attempted. `documents_send` requires `Draft`; a `Sent` document
+Expected, and it should not have been attempted. `PandaDoc:documents_send` requires `Draft`; a `Sent` document
 cannot be nudged through the API at all. Draft the text and hand it to the user.

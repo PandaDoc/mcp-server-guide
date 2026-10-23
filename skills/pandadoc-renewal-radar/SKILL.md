@@ -6,7 +6,7 @@ complexity: advanced
 prerequisites: [PandaDoc]
 description: Digest of signed contracts approaching renewal or expiry, with counterparty, value and days remaining. Reads the extracted renewal fields (renewal action deadline, term lengths, renewal type, opt-out period) rather than guessing a term from the document body, and distinguishes a contract's own end date from the signing-link expiry, which are not the same thing. Use when someone asks what is coming up for renewal.
 tags: [pandadoc, renewals, contracts, legal, reporting]
-version: "0.1.0"
+version: "0.1.1"
 metadata:
   visibility: internal
 ---
@@ -22,12 +22,12 @@ interchangeable and are not. Getting it wrong produces a list that is confidentl
 
 ## Prerequisites
 
-The PandaDoc MCP Server must be connected. Required tools: `documents_list`,
-`documents_details_get`, `documents_metadata_batch_get`. Useful: `documents_search` to narrow by a
-date column, and `documents_content_get` or `documents_summary_get` as a last resort when a contract
+The PandaDoc MCP Server must be connected. Required tools: `PandaDoc:documents_list`,
+`PandaDoc:documents_details_get`, `PandaDoc:documents_metadata_batch_get`. Useful: `PandaDoc:documents_search` to narrow by a
+date column, and `PandaDoc:documents_content_get` or `PandaDoc:documents_summary_get` as a last resort when a contract
 has no extracted term fields. If they are missing, say so and point at <https://mcp.pandadoc.com>.
 
-There is no `documents_metadata_get`. Every metadata read goes through `documents_metadata_batch_get`,
+There is no `documents_metadata_get`. Every metadata read goes through `PandaDoc:documents_metadata_batch_get`,
 which takes 1-40 IDs, so one document is a one-element `document_ids`.
 
 ---
@@ -36,9 +36,9 @@ which takes 1-40 IDs, so one document is a one-element `document_ids`.
 
 | Concept | Where | What it actually is |
 | --- | --- | --- |
-| `expiration_date` / `date_expiration` / `date_expired` | `documents_list`, `documents_details_get`, `documents_search` | **The signing link's expiry.** Set at send time — observed as `date_sent` + ~60 days. Meaningless once signed. |
-| `effective_date` | `documents_search` filter column only | When the agreement takes effect. Closer to what you want, but it is a start date, not an end date. |
-| `Agreement date` | `documents_metadata_batch_get`, AI-extracted | The date on the face of the contract. Also a start, not an end. |
+| `expiration_date` / `date_expiration` / `date_expired` | `PandaDoc:documents_list`, `PandaDoc:documents_details_get`, `PandaDoc:documents_search` | **The signing link's expiry.** Set at send time — observed as `date_sent` + ~60 days. Meaningless once signed. |
+| `effective_date` | `PandaDoc:documents_search` filter column only | When the agreement takes effect. Closer to what you want, but it is a start date, not an end date. |
+| `Agreement date` | `PandaDoc:documents_metadata_batch_get`, AI-extracted | The date on the face of the contract. Also a start, not an end. |
 
 **None of them is a renewal date.** No document field holds a contract end date.
 
@@ -61,7 +61,7 @@ The term is extracted into named metadata fields on a completed contract. **Read
 you read any document text.** Reading the term out of the body when a field already holds it is how
 this skill produces "I cannot derive a renewal date" on a contract that states one.
 
-`documents_metadata_batch_get` with `field_keys` (case-sensitive, unknown keys ignored):
+`PandaDoc:documents_metadata_batch_get` with `field_keys` (case-sensitive, unknown keys ignored):
 
 | Key | `field_type` | Shape of the value | What it gives you |
 | --- | --- | --- | --- |
@@ -95,22 +95,22 @@ comes back with no renewal keys at all — that is a real unknown, not a failed 
 Only `Completed` and `Paid` documents can be up for renewal. A `Draft` or `Sent` document is not a contract
 yet.
 
-`documents_list` with `status: "Completed"`, then `status: "Paid"`, `count: 100`.
+`PandaDoc:documents_list` with `status: "Completed"`, then `status: "Paid"`, `count: 100`.
 
-Do **not** use `documents_search` with a `signature_date` window to establish "signed": that filter returns
+Do **not** use `PandaDoc:documents_search` with a `signature_date` window to establish "signed": that filter returns
 documents nobody signed. It matches force-completed documents whose `recipients[].signature_date` is `null`.
 If you need to confirm a document was genuinely signed, check `signature_date` per recipient in
-`documents_details_get`.
+`PandaDoc:documents_details_get`.
 
 ### Step 2: Establish a start date per contract
 
 In order of preference:
 
-1. `documents_metadata_batch_get` → **`Agreement date`**. Only present on completed documents and
+1. `PandaDoc:documents_metadata_batch_get` → **`Agreement date`**. Only present on completed documents and
    extracted asynchronously. Each document reports its own `status`: retry `extraction_pending` once
    after `retry_after` seconds, and fall back on `extraction_not_started` (the document is not
    completed) or `extraction_failed` (terminal).
-2. `documents_search` with `date_filter_column: "effective_date"` if you are narrowing rather than reading
+2. `PandaDoc:documents_search` with `date_filter_column: "effective_date"` if you are narrowing rather than reading
    per document.
 3. `date_completed` as a last resort — the day it was signed. Say you used it.
 
@@ -134,14 +134,14 @@ Work down this ladder and stop at the first rung that answers. State which rung 
      which is the value the extracted deadline field itself carried on that contract. Report
      `Renewal type` alongside it: an
      `Auto-Renew` contract nobody cancels is a renewal, one that needs a new signature is a deal.
-3. **The document text** — only when the fields above are absent. `documents_summary_get`
-   (`summary_type: "detailed"`) or `documents_content_get`, looking for the duration and any
+3. **The document text** — only when the fields above are absent. `PandaDoc:documents_summary_get`
+   (`summary_type: "detailed"`) or `PandaDoc:documents_content_get`, looking for the duration and any
    auto-renewal language.
 4. **Unknown** — no field, no clause. Say so per contract and say why.
 
 Two warnings about rung 3:
 
-- `documents_summary_get` returns a **markdown re-rendering of the document**, not a structured summary, and
+- `PandaDoc:documents_summary_get` returns a **markdown re-rendering of the document**, not a structured summary, and
   on a document with empty fields it renders **placeholders as if they were terms** — `Effective Date: May
   12`, `Governing Law … State of (State)`. Do not read a term off a placeholder. If the value looks like a
   template default, treat the term as unknown.
@@ -155,12 +155,12 @@ skill exists to prevent.
 
 ### Step 4: Add counterparty and value
 
-- counterparty → `documents_metadata_batch_get` → `Counterparty name`, with the same `acceptance_status` caveat
-- value → `documents_details_get` → **`pricing.total`**, currency from `pricing.tables[].currency`, or
+- counterparty → `PandaDoc:documents_metadata_batch_get` → `Counterparty name`, with the same `acceptance_status` caveat
+- value → `PandaDoc:documents_details_get` → **`pricing.total`**, currency from `pricing.tables[].currency`, or
   `pricing.quotes[].currency` when `tables` is empty — a Quote-block document keeps its pricing there
 - **never `grand_total`** — observed as `0 PLN` on a document worth 200,000 USD
 
-`documents_metadata_batch_get` covers 1–40 documents per request and is worth using instead of a call each.
+`PandaDoc:documents_metadata_batch_get` covers 1–40 documents per request and is worth using instead of a call each.
 
 ### Step 5: Report
 
@@ -199,19 +199,19 @@ has nothing to do with renewals. Rebuild from `Completed`/`Paid` and a derived c
 
 ### A contract shows a term that matches the template default
 
-You read a placeholder rather than a filled value. `documents_summary_get` renders unfilled template fields
+You read a placeholder rather than a filled value. `PandaDoc:documents_summary_get` renders unfilled template fields
 as though they were content. Treat the term as unknown.
 
 ### The skill says it cannot find a renewal date and starts reading the contract body
 
 It skipped Step 3 rung 1. `Next renewal action deadline`, `Initial term length`, `Renewal term length`,
-`Renewal type` and `Renewal opt out period` are extracted fields — ask `documents_metadata_batch_get`
+`Renewal type` and `Renewal opt out period` are extracted fields — ask `PandaDoc:documents_metadata_batch_get`
 for them by key. Only a contract that genuinely has none of them (a quote, a proposal, an NDA with no
 term) falls through to the text.
 
 ### `documents_metadata_get` is not a tool
 
-It does not exist on the MCP server. Use `documents_metadata_batch_get` with a one-element
+It does not exist on the MCP server. Use `PandaDoc:documents_metadata_batch_get` with a one-element
 `document_ids`.
 
 ### `Renewal type` reads `["Auto-Renew"]` and a term length reads `12.0`
@@ -231,6 +231,6 @@ You read `grand_total`. Use `pricing.total`.
 
 ### A "signed" contract turns out to be unsigned
 
-It was flipped with `documents_status_change`, which sets `date_completed` but leaves every
+It was flipped with `PandaDoc:documents_status_change`, which sets `date_completed` but leaves every
 `recipients[].signature_date` as `null`. Check per-recipient signature dates before treating a document as a
 contract.
