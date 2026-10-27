@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.4 — 2026-10-27
+Synced from `pandadoc-studio/agentic-hub-skills@v0.2.3` (`397bf295`).
+- Updated: pandadoc-contract-register, pandadoc-nda-fast-send, pandadoc-onboarding-agreement
+
 ## v1.0.3 — 2026-10-23
 Synced from `pandadoc-studio/agentic-hub-skills@dev-0.2.2` (`c33f9d8e`).
 - Updated: pandadoc-approval-send, pandadoc-contract-register, pandadoc-engagement-tracker, pandadoc-followup-list, pandadoc-invoice-handoff, pandadoc-nda-fast-send, pandadoc-onboarding-agreement, pandadoc-quote-builder, pandadoc-renewal-radar, pandadoc-signing-velocity

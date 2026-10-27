@@ -140,6 +140,9 @@ Poll `PandaDoc:documents_status_get` until `Draft`.
 `PandaDoc:documents_details_get` and check `fields[]`. Any field whose `assigned_to.id` is empty belongs to a role
 with no recipient and will block sending.
 
+If the empty role is a second signer (a Manager, say), ask who it is and add them as a recipient. Never assign
+the joiner to that role to clear the gap: one person signing in two roles is not what the template intends.
+
 Fix with `PandaDoc:documents_fields_assign`, passing the field UUIDs and the recipient. Note this tool **assigns
 existing fields only** — it cannot create fields, so if the template lacks a field you need, the template has
 to change in PandaDoc.

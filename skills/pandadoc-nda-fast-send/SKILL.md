@@ -90,7 +90,8 @@ Count the signing roles that have no `preassigned_person`:
   not collapse them onto one person unless the user explicitly says this is a test or a self-sign.
 
   **Create the draft first, then ask. Never ask first.** A missing counter-signer blocks *sending*, not
-  *drafting*. Do not end the turn with the question. Call `PandaDoc:documents_create` (Step 4) with the recipients you
+  *drafting*. Do not end the turn with the question, and never say the draft will be created once they
+  answer: it is created now, with or without that answer. Call `PandaDoc:documents_create` (Step 4) with the recipients you
   already have, wait for `Draft` (Step 5), and only then ask, in the same response, alongside the draft link:
   *"This template also has a `<RoleName>` signature block — who signs on our side?"*
 
