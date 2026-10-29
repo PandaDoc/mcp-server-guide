@@ -1,0 +1,58 @@
+name: Sync release chores
+
+# Runs on the rolling skills Sync PR.
+# Bumps the plugin version and updates CHANGELOG.md on the same branch.
+# Files outside skills/ survive later syncs (docs/skills-sync.md, "Human commits on the Sync Branch").
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-release-chores-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  bump:
+    if: github.head_ref == 'automated/skills-sync' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      # A push made with GITHUB_TOKEN would not trigger CI on the PR, so use an App token.
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Bump version and changelog
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: node scripts/bump-plugin-version.mjs
+
+      - name: Validate plugin
+        run: npx --yes @anthropic-ai/claude-code@latest plugin validate . --strict
+
+      - name: Commit
+        run: |
+          if git diff --quiet; then
+            echo "Nothing to bump"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(plugin): bump version for skills sync"
+          git push
