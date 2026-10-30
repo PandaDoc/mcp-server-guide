@@ -10,6 +10,7 @@ const SOURCE = ".claude-plugin/plugin.json";
 const MANIFESTS = [
   "plugin.json",
   SOURCE,
+  ".devin-plugin/plugin.json",
   ".cursor-plugin/plugin.json",
   ".github/plugin/plugin.json",
   "gemini-extension.json",

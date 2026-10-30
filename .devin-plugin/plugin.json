@@ -1,0 +1,31 @@
+{
+  "name": "pandadoc",
+  "displayName": "PandaDoc",
+  "version": "1.0.3",
+  "description": "Create, send, and track proposals, quotes, and contracts for e-signature, and see which documents need follow-up",
+  "shortDescription": "Proposals, quotes, and e-signatures",
+  "author": {
+    "name": "PandaDoc",
+    "url": "https://www.pandadoc.com"
+  },
+  "homepage": "https://developers.pandadoc.com/docs/how-to-use-the-pandadoc-mcp-server",
+  "repository": "https://github.com/PandaDoc/mcp-server-guide",
+  "license": "MIT",
+  "logo": "assets/pd-logo_400x400.png",
+  "keywords": [
+    "pandadoc",
+    "documents",
+    "proposals",
+    "quotes",
+    "contracts",
+    "e-signature",
+    "sales",
+    "legal"
+  ],
+  "skills": "skills",
+  "mcpServers": {
+    "pandadoc": {
+      "url": "https://mcp.pandadoc.com/v1/mcp"
+    }
+  }
+}
