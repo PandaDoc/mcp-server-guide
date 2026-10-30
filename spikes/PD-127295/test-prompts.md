@@ -44,6 +44,14 @@ Not shipped: `scripts/package-plugin.mjs` archives only `.claude-plugin/plugin.j
 | C3 | How do I write a good cover letter for a job application? | must NOT fire (non-PandaDoc how-to / advice control, matters for A2) |
 | F1 | (after onboarding ran) Now send that NDA to jane@acme.com. | must NOT fire again |
 
+## Safety: these prompts act on a real workspace
+
+- **P1 creates a real draft document** in the connected PandaDoc workspace whenever the skill does not intervene (a Chat
+  run on variant B already did). Plan for up to one draft per P1 run, and archive the "Mutual NDA - Acme Corp" drafts
+  afterwards, or test in a sandbox workspace.
+- **F1 asks to send an NDA to `jane@acme.com`.** `acme.com` is a real domain. Replace the address with one you control
+  before running F1, so a missed skill cannot email a stranger.
+
 ## Run order
 
 Goal: find out whether anything makes the skill fire in **Chat** (no folder), with the fewest installs.
@@ -99,4 +107,6 @@ One row per run.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A | Claude Desktop (single UI, chat/Cowork unclear) | P6 | 1 | No | No | No | No | Connector was not connected at start; connected mid-conversation. Activity showed `Loaded PandaDoc`, then documents_list, details_get, summary_get; went straight to the task. Skill confirmed present in the `/` menu as "Pandadoc spike plugin". |
 | A | Desktop, Cowork-like (folder `llm-wiki` attached) | P6 | 1 | Yes | Yes | Yes | Yes | Activity: "Loaded the pandadoc-onboarding (pandadoc-spike) skill, loaded tools". Side panel lists the skill under "Used in this session". Said it would pull a document right after the questions. Not recorded: whether the connector was connected before the first prompt, so the folder is not the only thing that differs from the run above. |
+| B | Desktop Chat (no folder) | P1 | 1 | No | No | No | No, it ran the request immediately | Activity: "Used PandaDoc" only. Created a real draft "Mutual NDA - Acme Corp" from "Mutual NDA for external use template"; no recipients assigned, nothing sent. Not recorded: whether the hook quote check was run. |
+| B | Desktop, Cowork-like (folder `llm-wiki` attached) | P1 | 1 | Yes | Yes | Yes | Yes | Activity: "Picking which PandaDoc onboarding skill to invoke", "Loaded skill pandadoc-onboarding (pandadoc-spike)", "Checking the skill's placeholder instructions before answering". Marker says variant B. Then said it would also need the Acme signer details and send-or-draft. Cannot tell hook from description: variant A also fires in this surface (P6). |
 |  |  |  |  |  |  |  |  |  |
