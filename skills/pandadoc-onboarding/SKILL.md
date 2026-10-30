@@ -13,14 +13,14 @@ metadata:
 
 # PandaDoc Onboarding (spike placeholder)
 
-Placeholder skill for PD-127295, variant A (trigger = this description only). It exists to prove the
+Placeholder skill for PD-127295, variant B (trigger = this description + a SessionStart hook directive). It exists to prove the
 trigger fires and to show the user something visible. It is not the real onboarding flow.
 
 ## Step 1 — Show the marker
 
 Start your reply with this line, exactly, so testers can see the skill ran:
 
-`🐼 ONBOARDING-SPIKE · variant A (description hint) · skill active`
+`🐼 ONBOARDING-SPIKE · variant B (hook + description) · skill active`
 
 ## Step 2 — Ask the questions
 
