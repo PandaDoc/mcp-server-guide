@@ -14,7 +14,11 @@ Not shipped: `scripts/package-plugin.mjs` archives only `.claude-plugin/plugin.j
 
 ## Method
 
-- Surfaces: Claude Desktop and Cowork, PandaDoc connector connected **before** the first prompt.
+- Surfaces: Claude Desktop only, PandaDoc connector connected **before** the first prompt. Desktop has one UI for chat and
+  Cowork, so record which of these each run was:
+  - **Chat**: no folder attached.
+  - **Cowork-like**: a folder attached to the conversation (the "Used in this session" panel appears). Observed: the same
+    prompt fires variant A here and not in Chat, so treat these as two separate surfaces.
 - Install one variant at a time. Disable or uninstall the prod `pandadoc` plugin first. Both bundle the same MCP server and SessionStart hook.
 - Each prompt in a brand-new conversation, 5 runs per prompt per surface per variant.
 - A run counts as a trigger if the marker `🐼 ONBOARDING-SPIKE · variant` appears, or the skill shows in the activity.
@@ -54,4 +58,5 @@ One row per run.
 | Variant | Surface | Prompt | Run | Fired? | Marker visible? | Asked the 4 questions? | Did the original request wait? | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A | Claude Desktop (single UI, chat/Cowork unclear) | P6 | 1 | No | No | No | No | Connector was not connected at start; connected mid-conversation. Activity showed `Loaded PandaDoc`, then documents_list, details_get, summary_get; went straight to the task. Skill confirmed present in the `/` menu as "Pandadoc spike plugin". |
+| A | Desktop, Cowork-like (folder `llm-wiki` attached) | P6 | 1 | Yes | Yes | Yes | Yes | Activity: "Loaded the pandadoc-onboarding (pandadoc-spike) skill, loaded tools". Side panel lists the skill under "Used in this session". Said it would pull a document right after the questions. Not recorded: whether the connector was connected before the first prompt, so the folder is not the only thing that differs from the run above. |
 |  |  |  |  |  |  |  |  |  |
