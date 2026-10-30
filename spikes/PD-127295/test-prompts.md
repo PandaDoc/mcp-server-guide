@@ -7,7 +7,8 @@ Throwaway test builds: plugin `pandadoc-spike` = prod plugin + one extra skill, 
 | A | `1.0.0-spike.a` | Skill `description` only. No hook change, no MCP change. | `d767cf0` |
 | B | `1.0.0-spike.b` | Same `description`, plus an "IMPORTANT — FIRST ACTION" directive appended to the SessionStart hook output (full welcome and short reminder). | `0bef19b` |
 | A2 | `1.0.0-spike.a2` | Broad `description` only: fires on capability questions, how-to questions, advice requests, "not sure how to start", newcomer phrasing, and the first PandaDoc interaction, and says to run before any PandaDoc tool. Prod hook, no directive. | `4d4e1ca` |
-| A3 | `1.0.0-spike.a3` | A2's triggers in a short `description` (about 320 chars, no quotes or `?`), because in Chat the model had no description for this skill at all (see probe results). Prod hook, no directive. | see branch tip |
+| A3 | `1.0.0-spike.a3` | A2's triggers in a short `description` (about 320 chars, no quotes or `?`), because in Chat the model had no description for this skill at all (see probe results). Prod hook, no directive. | `1e90e58` |
+| A4 | `1.0.0-spike.a4` | Steer through the skill **name**, because in Chat the model only has the name. The skill is renamed from `pandadoc-onboarding` to `pandadoc-run-this-first-getting-started` (directory and `name:`). Description stays as in A3. Prod hook, no directive. From A4 on, prompts that name the skill must use the new name. | see branch tip |
 
 The skill `description` is byte-identical in A and B, so a difference between them comes from the hook.
 A2 changes only the `description` (and the marker and version) relative to A, and uses the unmodified prod hook, so a
@@ -104,7 +105,8 @@ Always: prod `pandadoc` plugin uninstalled, connector connected **before** the f
 | Explicit invocation (`/pandadoc-onboarding`) | Works. |
 | Quote the description of `pandadoc-onboarding` (A2 installed) | **The model has no description for it**: "shows up in my skill list with a name only, no description and no location". It loaded the skill only after being told to, and then quoted the A2 description from the frontmatter. It also said the sibling `pandadoc-onboarding-agreement` **does** have a description, so the loss is specific to this skill. |
 | Why only this skill? (local frontmatter comparison) | Unique to `pandadoc-onboarding`: description 864 chars (prod max 416), 10 double quotes and 3 `?` in the description (prod: none), `category: getting-started`, `complexity: beginner`. Shared with prod `renewal-radar`: `visibility: internal`. Cause not isolated. A3 shortens the description and removes quotes and `?`; if its description still does not reach the model, suspect `visibility` or `category` next. |
-| Next check | With A3 installed, in a fresh Chat: "What is the exact description of the pandadoc-onboarding skill? Quote it word for word." The model must answer without loading the skill. Only then run P3, P4 and P6. |
+| Next check (A4) | With A4 installed, in a fresh Chat, in this order. (1) P3, P4, P6, 5 runs each: does the name alone make it run the skill first? (2) Ask "Which PandaDoc skill, if any, should you run first for a new user, and why?" It must not need to load anything to answer. (3) C3, C4, 5 runs each: does a name that says "run this first" make it fire on non-PandaDoc prompts? A hit on a control means the name is too pushy. |
+| Next check (A3, superseded if A4 is run) | With A3 installed, in a fresh Chat: "What is the exact description of the pandadoc-onboarding skill? Quote it word for word." The model must answer without loading the skill. Only then run P3, P4 and P6. |
 | Quote the connector's `instructions` | Not run yet. |
 
 ## What the user sees when the skill loads

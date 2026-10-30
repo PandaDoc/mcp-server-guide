@@ -1,5 +1,5 @@
 ---
-name: pandadoc-onboarding
+name: pandadoc-run-this-first-getting-started
 category: getting-started
 roles: [sales, bizops, legal, finance, hr, ops, owner]
 complexity: beginner
@@ -13,14 +13,14 @@ metadata:
 
 # PandaDoc Onboarding (spike placeholder)
 
-Placeholder skill for PD-127295, variant A3 (trigger = a short, broad version of this description only, no hook change). It exists to prove the
+Placeholder skill for PD-127295, variant A4 (trigger = the skill name, plus a short description, no hook change). It exists to prove the
 trigger fires and to show the user something visible. It is not the real onboarding flow.
 
 ## Step 1 — Show the marker
 
 Start your reply with this line, exactly, so testers can see the skill ran:
 
-`🐼 ONBOARDING-SPIKE · variant A3 (short broad description) · skill active`
+`🐼 ONBOARDING-SPIKE · variant A4 (name hint) · skill active`
 
 ## Step 2 — Ask the questions
 
