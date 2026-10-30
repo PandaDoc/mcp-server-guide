@@ -1,7 +1,7 @@
 {
-  "name": "pandadoc",
-  "description": "Plugin that includes the PandaDoc MCP server and Skills for common workflows",
-  "version": "1.0.3",
+  "name": "pandadoc-spike",
+  "description": "[SPIKE PD-127295 variant A, not for release] Plugin that includes the PandaDoc MCP server and Skills for common workflows",
+  "version": "1.0.0-spike.a",
   "author": {
     "name": "PandaDoc"
   }
