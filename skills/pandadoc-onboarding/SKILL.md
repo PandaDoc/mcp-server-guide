@@ -4,7 +4,7 @@ category: getting-started
 roles: [sales, bizops, legal, finance, hr, ops, owner]
 complexity: beginner
 prerequisites: [PandaDoc]
-description: Welcome and getting-started guide for people new to PandaDoc in Claude. Use FIRST, before any other PandaDoc skill or tool, when this is the user's first PandaDoc interaction in the conversation, when they say they are new to PandaDoc or the PandaDoc connector, or when they ask what PandaDoc can do, how to get started, or what to try ("what can you do with PandaDoc?", "help me get started", "I just connected PandaDoc"). Asks a few quick questions, then recommends the best PandaDoc skills and ready-to-use prompts for their role. Skip it once onboarding has already run in this conversation.
+description: Guide for anyone unsure how to use PandaDoc in Claude. Use BEFORE calling any PandaDoc tool or any other PandaDoc skill whenever the user asks what PandaDoc or Claude can do, asks how to do something with documents, templates, quotes, contracts or signatures, asks for advice or ideas, says they are unsure what to try or how to start, or says they are new to PandaDoc or just connected it. Also use it on the user's first PandaDoc interaction in a conversation, even when they give a concrete task. Typical requests include "what can you do with PandaDoc?", "how do I get a contract signed faster?", "any advice on chasing signatures?", "help me get started" and "I just connected PandaDoc". Asks a few quick questions, then recommends the best PandaDoc skills and ready-to-use prompts for their role. Skip it once onboarding has already run in this conversation.
 tags: [pandadoc, onboarding, getting-started, welcome]
 version: "0.0.1"
 metadata:
@@ -13,14 +13,14 @@ metadata:
 
 # PandaDoc Onboarding (spike placeholder)
 
-Placeholder skill for PD-127295, variant B (trigger = this description + a SessionStart hook directive). It exists to prove the
+Placeholder skill for PD-127295, variant A2 (trigger = a broad version of this description only, no hook change). It exists to prove the
 trigger fires and to show the user something visible. It is not the real onboarding flow.
 
 ## Step 1 — Show the marker
 
 Start your reply with this line, exactly, so testers can see the skill ran:
 
-`🐼 ONBOARDING-SPIKE · variant B (hook + description) · skill active`
+`🐼 ONBOARDING-SPIKE · variant A2 (broad description) · skill active`
 
 ## Step 2 — Ask the questions
 

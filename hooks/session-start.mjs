@@ -13,17 +13,6 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Declared before the try block: the const would still be in its temporal dead zone when
-// the functions below run, and the catch would swallow the ReferenceError.
-const ONBOARDING_DIRECTIVE = [
-  "IMPORTANT — FIRST ACTION: if the user's first message in this conversation involves PandaDoc",
-  "(documents, templates, signing, quotes, contracts, or the PandaDoc connector), invoke the",
-  "`pandadoc-onboarding` skill BEFORE anything else: before answering, and before calling any PandaDoc tool.",
-  "This applies even when the message is a concrete request — run the onboarding skill first, then",
-  "continue with their request. Skip it only if onboarding already ran in this conversation or the",
-  "message has nothing to do with PandaDoc.",
-].join(" ");
-
 try {
   const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT || join(dirname(fileURLToPath(import.meta.url)), "..");
   const skills = readSkills(join(pluginRoot, "skills"));
@@ -103,14 +92,12 @@ function fullWelcome(skills) {
     '- "Which contracts expire in the next 30 days?"',
     "",
     "Type `/` to browse them, or just describe the task and the right skill runs automatically.",
-    "",
-    ONBOARDING_DIRECTIVE,
   );
   return lines.join("\n");
 }
 
 function shortReminder(skills) {
-  return `PandaDoc plugin active — ${skills.length} skills for documents, quotes, NDAs, approvals and contract insights (needs the PandaDoc connector). Type \`/\` to browse, or just describe the task.\n\n${ONBOARDING_DIRECTIVE}`;
+  return `PandaDoc plugin active — ${skills.length} skills for documents, quotes, NDAs, approvals and contract insights (needs the PandaDoc connector). Type \`/\` to browse, or just describe the task.`;
 }
 
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
