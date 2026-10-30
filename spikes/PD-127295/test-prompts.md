@@ -6,7 +6,8 @@ Throwaway test builds: plugin `pandadoc-spike` = prod plugin + one extra skill, 
 | --- | --- | --- | --- |
 | A | `1.0.0-spike.a` | Skill `description` only. No hook change, no MCP change. | `d767cf0` |
 | B | `1.0.0-spike.b` | Same `description`, plus an "IMPORTANT — FIRST ACTION" directive appended to the SessionStart hook output (full welcome and short reminder). | `0bef19b` |
-| A2 | `1.0.0-spike.a2` | Broad `description` only: fires on capability questions, how-to questions, advice requests, "not sure how to start", newcomer phrasing, and the first PandaDoc interaction, and says to run before any PandaDoc tool. Prod hook, no directive. | see branch tip |
+| A2 | `1.0.0-spike.a2` | Broad `description` only: fires on capability questions, how-to questions, advice requests, "not sure how to start", newcomer phrasing, and the first PandaDoc interaction, and says to run before any PandaDoc tool. Prod hook, no directive. | `4d4e1ca` |
+| A3 | `1.0.0-spike.a3` | A2's triggers in a short `description` (about 320 chars, no quotes or `?`), because in Chat the model had no description for this skill at all (see probe results). Prod hook, no directive. | see branch tip |
 
 The skill `description` is byte-identical in A and B, so a difference between them comes from the hook.
 A2 changes only the `description` (and the marker and version) relative to A, and uses the unmodified prod hook, so a
@@ -101,7 +102,9 @@ Always: prod `pandadoc` plugin uninstalled, connector connected **before** the f
 | --- | --- |
 | "list all the skills you can use" | All 11 `pandadoc-spike:` skills listed, including `pandadoc-onboarding`. The model said "Where I only have a name and no description, I've noted that", and the PandaDoc skills were listed as bare names while built-ins (`docx`, `pdf`, `docs`...) had descriptions. Not yet verified that descriptions are missing. The conversation was not fresh (it referred to an earlier signing question). |
 | Explicit invocation (`/pandadoc-onboarding`) | Works. |
-| Quote the description of `pandadoc-onboarding` | Not run yet. If the model cannot quote it, plugin skill descriptions do not reach the model in Chat, and only the skill **name** can steer it. |
+| Quote the description of `pandadoc-onboarding` (A2 installed) | **The model has no description for it**: "shows up in my skill list with a name only, no description and no location". It loaded the skill only after being told to, and then quoted the A2 description from the frontmatter. It also said the sibling `pandadoc-onboarding-agreement` **does** have a description, so the loss is specific to this skill. |
+| Why only this skill? (local frontmatter comparison) | Unique to `pandadoc-onboarding`: description 864 chars (prod max 416), 10 double quotes and 3 `?` in the description (prod: none), `category: getting-started`, `complexity: beginner`. Shared with prod `renewal-radar`: `visibility: internal`. Cause not isolated. A3 shortens the description and removes quotes and `?`; if its description still does not reach the model, suspect `visibility` or `category` next. |
+| Next check | With A3 installed, in a fresh Chat: "What is the exact description of the pandadoc-onboarding skill? Quote it word for word." The model must answer without loading the skill. Only then run P3, P4 and P6. |
 | Quote the connector's `instructions` | Not run yet. |
 
 ## What the user sees when the skill loads
