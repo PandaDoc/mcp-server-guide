@@ -95,6 +95,15 @@ Always: prod `pandadoc` plugin uninstalled, connector connected **before** the f
   "What did the PandaDoc plugin's session-start context say?". If Claude can quote the IMPORTANT line, the hook ran
   and was ignored. If it can't, the hook did not run on that surface.
 
+## Probe results (Desktop Chat, no folder)
+
+| Probe | Result |
+| --- | --- |
+| "list all the skills you can use" | All 11 `pandadoc-spike:` skills listed, including `pandadoc-onboarding`. The model said "Where I only have a name and no description, I've noted that", and the PandaDoc skills were listed as bare names while built-ins (`docx`, `pdf`, `docs`...) had descriptions. Not yet verified that descriptions are missing. The conversation was not fresh (it referred to an earlier signing question). |
+| Explicit invocation (`/pandadoc-onboarding`) | Works. |
+| Quote the description of `pandadoc-onboarding` | Not run yet. If the model cannot quote it, plugin skill descriptions do not reach the model in Chat, and only the skill **name** can steer it. |
+| Quote the connector's `instructions` | Not run yet. |
+
 ## What the user sees when the skill loads
 
 Surface: ______  Notes: ______
