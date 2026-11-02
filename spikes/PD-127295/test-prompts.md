@@ -8,7 +8,7 @@ Throwaway test builds: plugin `pandadoc-spike` = prod plugin + one extra skill, 
 | B | `1.0.0-spike.b` | Same `description`, plus an "IMPORTANT — FIRST ACTION" directive appended to the SessionStart hook output (full welcome and short reminder). | `0bef19b` |
 | A2 | `1.0.0-spike.a2` | Broad `description` only: fires on capability questions, how-to questions, advice requests, "not sure how to start", newcomer phrasing, and the first PandaDoc interaction, and says to run before any PandaDoc tool. Prod hook, no directive. | `4d4e1ca` |
 | A3 | `1.0.0-spike.a3` | A2's triggers in a short `description` (about 320 chars, no quotes or `?`), because in Chat the model had no description for this skill at all (see probe results). Prod hook, no directive. | `1e90e58` |
-| A4 | `1.0.0-spike.a4` | Steer through the skill **name**, because in Chat the model only has the name. The skill is renamed from `pandadoc-onboarding` to `pandadoc-run-this-first-getting-started` (directory and `name:`). Description stays as in A3. Prod hook, no directive. From A4 on, prompts that name the skill must use the new name. | see branch tip |
+| A4 | `1.0.0-spike.a4` | Steer through the skill **name**, because in Chat the model only has the name. The skill is renamed from `pandadoc-onboarding` to `pandadoc-run-this-first-getting-started` (directory and `name:`). Description stays as in A3. Prod hook, no directive. From A4 on, prompts that name the skill must use the new name. `8ae304b` |
 
 The skill `description` is byte-identical in A and B, so a difference between them comes from the hook.
 A2 changes only the `description` (and the marker and version) relative to A, and uses the unmodified prod hook, so a
@@ -44,6 +44,7 @@ Not shipped: `scripts/package-plugin.mjs` archives only `.claude-plugin/plugin.j
 | C1 | Write a Python function that parses ISO dates. | must NOT fire (control) |
 | C2 | Summarise this paragraph in one line: "The quarterly report shows revenue grew 4%." | must NOT fire (control) |
 | C3 | How do I write a good cover letter for a job application? | must NOT fire (non-PandaDoc how-to / advice control, matters for A2) |
+| C4 | What can you do? | must NOT fire (generic capability question with no PandaDoc mention, matters for A4's "run this first" name) |
 | F1 | (after onboarding ran) Now send that NDA to jane@acme.com. | must NOT fire again |
 
 ## Safety: these prompts act on a real workspace
@@ -126,4 +127,5 @@ One row per run.
 | A2 | Desktop Chat (no folder) | P3 | 1 | No | No | No | No, it answered directly | Activity: a "Thought for 3s" block ("Checking which PandaDoc tools are available"), no skill row. Answered from the connector's tool list. Run count not stated, recorded as 1. |
 | A2 | Desktop Chat (no folder) | P4 | 1 | No | No | No | No, it answered directly | Activity: "Loaded PandaDoc", listed documents and templates, no skill row. Ended with a capabilities list and "I'll confirm before any send". Run count not stated, recorded as 1. |
 | A2 | Desktop Chat (no folder) | P6 | 1 | No | No | No | No, it ran the request immediately | Activity: added a task, loaded PandaDoc, listed documents, fetched details and summary, no skill row. `documents_audit_trail_get` showed **Failed**. The reply mentions "your signing-speed question", which is not in this prompt: check whether this was a fresh conversation, or whether Chat memory carried context over. |
-|  |  |  |  |  |  |  |  |  |
+| A4 | Desktop Chat (no folder) | P3 | 1 | **Yes** | Yes | Yes | Yes | Activity: "Checking the PandaDoc skills before answering", "Loaded skill pandadoc-run-this-first-getting-started (pandadoc-spike)", "Checking whether to add a capability overview". Marker says variant A4. Asked the 4 questions, then offered to do a concrete task. First Chat fire. Whether the conversation was fresh was not recorded. |
+| A4 | Desktop Chat (no folder) | P6 | 1 | **Yes** | Yes | Yes | Yes | Activity: "Loaded skill pandadoc-run-this-first-getting-started (pandadoc-spike)", "Weighing the skill's question-first rule against the concrete request". Said it would pull a document right after the questions, and made no PandaDoc tool call before asking. Whether the conversation was fresh was not recorded. |
