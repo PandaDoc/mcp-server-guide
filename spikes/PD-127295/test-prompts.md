@@ -8,7 +8,8 @@ Throwaway test builds: plugin `pandadoc-spike` = prod plugin + one extra skill, 
 | B | `1.0.0-spike.b` | Same `description`, plus an "IMPORTANT — FIRST ACTION" directive appended to the SessionStart hook output (full welcome and short reminder). | `0bef19b` |
 | A2 | `1.0.0-spike.a2` | Broad `description` only: fires on capability questions, how-to questions, advice requests, "not sure how to start", newcomer phrasing, and the first PandaDoc interaction, and says to run before any PandaDoc tool. Prod hook, no directive. | `4d4e1ca` |
 | A3 | `1.0.0-spike.a3` | A2's triggers in a short `description` (about 320 chars, no quotes or `?`), because in Chat the model had no description for this skill at all (see probe results). Prod hook, no directive. | `1e90e58` |
-| A4 | `1.0.0-spike.a4` | Steer through the skill **name**, because in Chat the model only has the name. The skill is renamed from `pandadoc-onboarding` to `pandadoc-run-this-first-getting-started` (directory and `name:`). Description stays as in A3. Prod hook, no directive. From A4 on, prompts that name the skill must use the new name. `8ae304b` |
+| A4 | `1.0.0-spike.a4` | Steer through the skill **name**, because in Chat the model only has the name. The skill is renamed from `pandadoc-onboarding` to `pandadoc-run-this-first-getting-started` (directory and `name:`). Description stays as in A3. Prod hook, no directive. From A4 on, prompts that name the skill must use the new name. | `8ae304b` |
+| A5 | `1.0.0-spike.a5` | Second goal (memory, not triggering). A4's name and description unchanged; only the skill body changes. Step 0 checks memory for a `PandaDoc onboarding completed: ...` record and skips onboarding if it exists. Step 2b saves the four answers to memory once all are given. Prod hook, no directive. Markers: `skill active`, `already completed, skipped`, and `Saved to memory:` / `Could not save to memory.` | see branch tip |
 
 The skill `description` is byte-identical in A and B, so a difference between them comes from the hook.
 A2 changes only the `description` (and the marker and version) relative to A, and uses the unmodified prod hook, so a
@@ -109,6 +110,34 @@ Always: prod `pandadoc` plugin uninstalled, connector connected **before** the f
 | Next check (A4) | With A4 installed, in a fresh Chat, in this order. (1) P3, P4, P6, 5 runs each: does the name alone make it run the skill first? (2) Ask "Which PandaDoc skill, if any, should you run first for a new user, and why?" It must not need to load anything to answer. (3) C3, C4, 5 runs each: does a name that says "run this first" make it fire on non-PandaDoc prompts? A hit on a control means the name is too pushy. |
 | Next check (A3, superseded if A4 is run) | With A3 installed, in a fresh Chat: "What is the exact description of the pandadoc-onboarding skill? Quote it word for word." The model must answer without loading the skill. Only then run P3, P4 and P6. |
 | Quote the connector's `instructions` | Not run yet. |
+
+## Memory test (variant A5, Desktop Chat)
+
+Question: once the four onboarding answers are given, does Claude remember them, so the next conversation skips onboarding?
+The skill still **loads** each time (the name triggers it); a skip means it loads, shows the `already completed, skipped`
+marker and does not ask the questions.
+
+Setup: install zip `a5`, prod `pandadoc` plugin uninstalled, connector connected. Check first that Claude's memory is
+turned on in Desktop settings. Before starting, open memory settings and delete any earlier `PandaDoc onboarding` entry,
+so each round starts from a known state. Each step is a brand-new conversation.
+
+| Step | Do | Expect |
+| --- | --- | --- |
+| M1 | P3 ("What can you do with PandaDoc?"). Answer all four questions in one message, e.g. "sales; NDAs and quotes; chasing signatures; see what is possible". | Marker `skill active`, questions asked, then `Saved to memory: PandaDoc onboarding completed: role=...`. Look in memory settings: the record is there. |
+| M2 | New conversation, P3 again. | Marker `already completed, skipped`, no questions, answer tailored to the stored role. |
+| M3 | New conversation, P6. | Skipped, and it does the concrete task right away. |
+| M4 | New conversation, P4 ("I just connected PandaDoc, help me get started."). | Skipped; says what it can do for the stored role without re-asking. |
+| M5 | Reset: delete the record in memory settings. New conversation, P3. | Marker `skill active`, questions asked again. |
+| M6 | Partial: new conversation, P3, answer only 2 of 4 questions. | Nothing saved (check memory settings). Next conversation asks again. |
+| M7 | Same record, one day later (memory can sync with a delay). New conversation, P3. | Skipped. If M2 failed but M7 passes, memory recall is delayed, not broken. |
+
+Read the failure mode: no `Saved to memory:` line = it did not try or cannot (look for `Could not save to memory.`);
+saved but not skipped in M2 = recall failed or is delayed; `(memory not available)` in the marker = Chat has no memory
+access for this skill.
+
+| Step | Run | Saved? | Record visible in memory settings? | Skipped next time? | Notes |
+| --- | --- | --- | --- | --- | --- |
+|  |  |  |  |  |  |
 
 ## What the user sees when the skill loads
 

@@ -13,14 +13,26 @@ metadata:
 
 # PandaDoc Onboarding (spike placeholder)
 
-Placeholder skill for PD-127295, variant A4 (trigger = the skill name, plus a short description, no hook change). It exists to prove the
-trigger fires and to show the user something visible. It is not the real onboarding flow.
+Placeholder skill for PD-127295, variant A5 (A4's name and description, plus a memory check: onboarding runs only until the questions are answered once). It exists to prove the
+trigger fires, that answers can be remembered across conversations, and to show the user something visible. It is not the real onboarding flow.
+
+## Step 0 — Check memory first
+
+Before anything else, look in your memory for a record that starts with `PandaDoc onboarding completed`.
+
+- **Found:** onboarding is done. Start your reply with this line, exactly, then do **not** ask the questions and do not
+  run Steps 1 to 4. Carry on with whatever the user asked, using the stored answers to tailor it:
+
+  `🐼 ONBOARDING-SPIKE · variant A5 · already completed, skipped`
+
+- **Not found:** continue with Step 1.
+- **You have no way to read memory:** treat it as not found, and put `(memory not available)` at the end of the Step 1 marker.
 
 ## Step 1 — Show the marker
 
 Start your reply with this line, exactly, so testers can see the skill ran:
 
-`🐼 ONBOARDING-SPIKE · variant A4 (name hint) · skill active`
+`🐼 ONBOARDING-SPIKE · variant A5 · skill active`
 
 ## Step 2 — Ask the questions
 
@@ -34,6 +46,15 @@ a few words. Do not call any PandaDoc tool yet.
 
 Then stop and wait for the answers. If the user already asked for a concrete task, say you will do it right
 after these questions.
+
+## Step 2b — Save the answers to memory
+
+Once the user has answered all four questions, save one record to your memory, the same way you would if they had said
+"remember this". Use this exact form so Step 0 can find it:
+
+`PandaDoc onboarding completed: role=<answer 1>; documents=<answer 2>; pain=<answer 3>; goal=<answer 4>`
+
+Then tell the user in one line: `Saved to memory: <the record>`. If you cannot save to memory, say `Could not save to memory.` instead. If the user answered only some of the questions, do not save anything, so the questions come back next time.
 
 ## Step 3 — Recommend
 
