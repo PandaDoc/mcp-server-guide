@@ -129,7 +129,8 @@ the term flags that are set. Omit flags that are false rather than listing nine 
 Then, in plain words:
 
 - how the candidate set was built, and the exact search terms if you used any
-- that extracted values are **AI-derived with `acceptance_status: pending`**, not human-reviewed
+- that extracted values are **AI-derived with `acceptance_status: pending`**, not human-reviewed. Mark every
+  extracted value in the row as unconfirmed (counterparty, signer, dates and terms alike), not only some of them
 - how many contracts had no extraction available
 - that the register is **best-effort, not exhaustive**, if a search was involved
 

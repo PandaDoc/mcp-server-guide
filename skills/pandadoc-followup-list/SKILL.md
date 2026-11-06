@@ -6,7 +6,7 @@ complexity: intermediate
 prerequisites: [PandaDoc]
 description: Sweep documents that are still out for signature, rank them by how long they have been waiting and what they are worth, and draft a follow-up message for each. Use when someone asks what needs chasing, which documents are stuck, or wants nudges drafted.
 tags: [pandadoc, follow-up, pipeline, e-signature, sales]
-version: "0.1.1"
+version: "0.1.2"
 metadata:
   visibility: public
 ---
@@ -62,45 +62,62 @@ Never include `Draft` (never sent), `Completed`, `Paid`, `Declined`, `Expired`.
 accepts `status[]` but requires a non-empty `query`, which would silently narrow the sweep — so prefer
 several `PandaDoc:documents_list` calls with `count: 100`.
 
-Note there is no sort parameter; default order is `date_created` descending.
+`PandaDoc:documents_list` accepts `sort_by` (including `date_sent` and `date_expiration`) and `sort_order`.
+Pass `sort_by: date_sent` with `sort_order: asc` so the longest-waiting documents come first, and pass
+`sort_order` explicitly: it is ascending when omitted. When `sort_by` is omitted the default is
+`date_status_changed`, not `date_created`.
 
 ### Step 3: Age each document
 
-`PandaDoc:documents_list` gives you `date_created` and `date_modified` for free. It does **not** give you
-`date_sent` — that exists only in `PandaDoc:documents_details_get`, one call per document.
+List rows from `PandaDoc:documents_list` include `date_sent` and `expiration_date`, so ageing needs no
+`PandaDoc:documents_details_get` calls. Age each document from **`date_sent`**, the honest measure of "how
+long it has been out".
 
-Choose deliberately:
-
-- **`date_sent`** is the honest measure of "how long it has been out", but costs one call per document.
-- **`date_created`** is free but overstates the wait for anything that sat in draft first.
-
-Default to `date_sent` when the set is small (say under 30 documents) and to `date_created` above that,
-and **say which you used.** If you used `date_created`, say the figure is time-since-created, not
-time-since-sent — otherwise the user reads it as the latter.
+Do not age from `date_created`: it overstates the wait for anything that sat in draft first. If a row has
+no `date_sent`, fall back to `date_created` for that document and **say so**, with the figure labelled
+time-since-created, not time-since-sent — otherwise the user reads it as the latter. Otherwise say the age
+is measured from the date sent.
 
 Bucket by age: **0–3 days / 4–7 / 8–14 / 15+**. Oldest first inside each bucket.
 
-### Step 4: Add value and recipient, if the user wants ranking
+### Step 4: Add value and recipient
 
-Value and recipients live only in `PandaDoc:documents_details_get`. If you are already calling it for `date_sent`,
-take them in the same pass.
+Value and recipients live only in `PandaDoc:documents_details_get`, and list rows do not carry them. Drafting
+a nudge needs the recipients, so make one details call per document you will report. The same response gives
+you value and currency, so ranking by value costs nothing extra. Until draft 1 ships there is no cheaper way
+to rank by value.
+
+Cap this at **20 documents per run**. The cap is a guard against long runs and guessed values on accounts with
+many stale documents, not a tool limit; raise or lower it if runs prove too slow or too thin. Open details
+for the oldest 20 (or the number the user asked for), say how many more are waiting, and offer to continue
+with the next batch. Never fill in recipients or values for documents you did not open.
 
 - value → `pricing.total`, currency → `pricing.tables[].currency`, falling back to
   `pricing.quotes[].currency` when `tables` is empty. A document built on a Quote block has its pricing
   under `quotes[]` and an empty `tables[]`, so reading only `tables` silently loses the currency.
-- **never `grand_total`** — it has been observed reading `0 PLN` on a document worth 200,000 USD
+- prefer `pricing.total` over `grand_total`. `grand_total` is an object (`{"amount": "10", "currency": "USD"}`),
+  not a bare number. Its `amount` matches the pricing total but is rounded to two decimals (880.27 against
+  880.2675), so it can differ in the cents.
+- a document with no pricing returns a total of 0 with a default currency (for example PLN on an
+  onboarding agreement). Report that as "no pricing", not as a value of 0 or as a document worth nothing.
 - rows with `options.optional_selected: false` are excluded from the total, so do not sum line items
   yourself
-- recipient → `recipients[]`, and `has_completed` per recipient tells you who is holding it up
+- recipient → `recipients[]`, and `has_completed` per recipient tells you who is holding it up. Only
+  recipients with `recipient_type: signer` can hold a document up. CC recipients show `has_completed: true`
+  and never sign.
 
 Rank by age first, value second. A 20-day-old $5k document usually needs the nudge more than a 2-day-old
 $500k one, and the user can re-sort if they disagree.
 
-If you skipped the detail calls, say the list is unranked by value rather than reporting zeros.
+If the user only wants the stale list and no nudges, you may skip the detail calls. Then say the list is
+unranked by value and has no recipients, rather than reporting zeros.
 
 ### Step 5: Draft a nudge per document
 
-One short message each, addressed to the recipient who has not completed. Reference the document by name,
+One short message each, addressed to the signer who has not completed. If the document has no signer (every
+recipient is CC, or `recipients[]` is empty), nobody can sign it, so a nudge would go nowhere. Do not draft
+one and do not address a CC. Flag the document as having no signer assigned and tell the user to fix the
+recipients first. Reference the document by name,
 say how long it has been waiting, and give them the signing link from `recipients[].shared_link` if
 present.
 
@@ -113,7 +130,7 @@ Group by bucket, oldest first. For each: name, status, age, who has not signed, 
 the drafted nudge. Then state plainly:
 
 - which statuses you counted
-- whether age is time-since-sent or time-since-created
+- whether age is time-since-sent (the default) or time-since-created (only for rows without `date_sent`)
 - that **nothing has been sent** and these are drafts for the user to send
 
 ---
@@ -140,12 +157,13 @@ but not in the default `Sent`/`Viewed` set.
 
 ### Ages look far too long
 
-You aged from `date_created` on documents that sat in draft. Re-run with `date_sent` from
-`PandaDoc:documents_details_get` for the affected ones.
+You aged from `date_created` on documents that sat in draft. Re-run using `date_sent` from the
+`PandaDoc:documents_list` rows.
 
 ### Value shows as 0
 
-You read `grand_total`. Use `pricing.total`.
+Either the document has no pricing (the total is 0 with a default currency, so report "no pricing"), or you
+read `grand_total`, an object whose `amount` is rounded to two decimals. Use `pricing.total`.
 
 ### `documents_send` fails on one of these
 

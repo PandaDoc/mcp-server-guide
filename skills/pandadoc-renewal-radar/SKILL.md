@@ -6,9 +6,9 @@ complexity: advanced
 prerequisites: [PandaDoc]
 description: Digest of signed contracts approaching renewal or expiry, with counterparty, value and days remaining. Reads the extracted renewal fields (renewal action deadline, term lengths, renewal type, opt-out period) rather than guessing a term from the document body, and distinguishes a contract's own end date from the signing-link expiry, which are not the same thing. Use when someone asks what is coming up for renewal.
 tags: [pandadoc, renewals, contracts, legal, reporting]
-version: "0.1.1"
+version: "0.1.2"
 metadata:
-  visibility: internal
+  visibility: public
 ---
 
 # PandaDoc Contract Renewal Radar
