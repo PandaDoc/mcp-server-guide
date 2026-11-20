@@ -10,7 +10,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: sync-release-chores-${{ github.head_ref }}
@@ -21,18 +21,10 @@ jobs:
     if: github.head_ref == 'automated/skills-sync' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-      # A push made with GITHUB_TOKEN would not trigger CI on the PR, so use an App token.
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        id: app-token
-        with:
-          app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
-          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
-
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
 
       - uses: actions/setup-node@v7
         with:
