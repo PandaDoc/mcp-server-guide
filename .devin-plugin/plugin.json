@@ -1,7 +1,7 @@
 {
   "name": "pandadoc",
   "displayName": "PandaDoc",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Create, send, and track proposals, quotes, and contracts for e-signature, and see which documents need follow-up",
   "shortDescription": "Proposals, quotes, and e-signatures",
   "author": {
