@@ -1,7 +1,7 @@
 {
   "name": "pandadoc",
   "displayName": "PandaDoc",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Plugin that includes the PandaDoc MCP server and Skills for common workflows",
   "author": {
     "name": "PandaDoc"
