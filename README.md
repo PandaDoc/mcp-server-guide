@@ -181,6 +181,44 @@ Keep your existing entries and add `pandadoc` alongside them, with a comma betwe
 
 </details>
 
+<a id="windsurf-devin-desktop"></a>
+
+### Windsurf / Devin Desktop
+
+The PandaDoc plugin adds the PandaDoc MCP server and the PandaDoc skills to Devin Desktop (formerly Windsurf), the Devin CLI, and Devin cloud sessions.
+
+1. Sign in to the Devin CLI with `devin auth login`.
+2. Install the plugin:
+
+   ```sh
+   devin plugins install PandaDoc/mcp-server-guide
+   ```
+
+3. Start a new session. When Devin first uses PandaDoc, it asks you to sign in.
+4. Complete PandaDoc authorization in your browser. Type `/pandadoc:` to browse the skills, or describe your task.
+
+If PandaDoc later shows **Needs auth** in Devin Desktop, open **Customize → MCPs** and select **Authenticate**.
+
+<details>
+<summary>Connect the MCP server without installing the plugin</summary>
+
+Add PandaDoc to the `mcpServers` object in `~/.config/devin/config.json`:
+
+```json
+{
+  "mcpServers": {
+    "pandadoc": {
+      "url": "https://mcp.pandadoc.com/v1/mcp",
+      "transport": "http"
+    }
+  }
+}
+```
+
+Then run `devin mcp login pandadoc`, or select **Authenticate** in **Customize → MCPs**, and complete PandaDoc authorization in your browser.
+
+</details>
+
 <a id="codex"></a>
 
 ### <img src="./assets/readme/codex.svg" alt="" width="24" height="24" align="absmiddle"> Codex
